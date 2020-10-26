@@ -1,0 +1,84 @@
+1. FASTA / FASTAQ
+
+염기서열 또는 단백질 서열을 나타내기 위해 단일 문자 코드를 사용.
+텍스트의 길이는 라인당 80자 이하.
+FASTAQ는 퀄리티 점수를 포함.
+
+----------------------
+> : header
+sequence data.
+----------------------
+
+* nucleic acid codes:
+  A --> adenosine           M --> A C (amino)
+  C --> cytidine            S --> G C (strong)
+  G --> guanine             W --> A T (weak)
+  T --> thymidine           B --> G T C
+  U --> uridine             D --> G A T
+  R --> G A (purine)        H --> A C T
+  Y --> T C (pyrimidine)    V --> G C A
+  K --> G T (keto)          N --> A G C T (any)
+
+* amino acid codes:
+  A ALA alanine                         P PRO proline
+  B ASX aspartate or asparagine *       Q GLN glutamine
+  C CYS cystine                         R ARG arginine
+  D ASP aspartate                       S SER serine
+  E GLU glutamate                       T THR threonine
+  F PHE phenylalanine                   U     selenocysteine
+  G GLY glycine                         V VAL valine
+  H HIS histidine                       W TRP tryptophan
+  I ILE isoleucine                      Y TYR tyrosine
+  K LYS lysine                          Z GLX glutamate or glutamine *
+  L LEU leucine                         X     any
+  M MET methionine                      *     translation stop
+  N ASN asparagine                      -     gap of indeterminate length
+
+
+
+2. SAM (sequence alignment map) / BAM (binary alignment map)
+
+http://www.incodom.kr/SAM
+http://www.incodom.kr/SAMtools
+Pysam - SAM과 BAM 포맷파일을 쉽게 읽고 쓸 수 있는 파이썬 라이브러리
+
+-------------------------------------------------
+@ : header. Reference로 이용된 서열의 정보
+read_id
+flag : sam flag, mapping information으로 2 bit로 정의되어 있음, 아래참조
+mapping reference id : 만약에 align된 read가 없으면 "*"로 표시
+mapping position : 1-based index, read의 왼쪽 끝
+mapping quality : alignment의 특이성(uniqueness)을 묘사, 0=특이성 없음, >10 아마도 특이함
+CIGAR tag : mapping 형태, alignment 안의 insertions/deletions/matches의 위치 묘사 및 splice junctions의 부호화
+mapping 횟수
+MPOS/PNEXT : mate pair의 position 정보
+ISIZE/TLEN : Template length
+SEQ : Read Sequence
+QUAL : Read Quality
+TAGs
+-------------------------------------------------
+
+
+
+3. BED (browser extensible data)
+
+유전자 서열을 구간별로 나눠 구간의 특징을 주석으로 표기할 수 있는 파일 형식
+bp = base pair
+http://www.incodom.kr/bedtools
+
+
+
+4. VCF (variant calling format)
+
+유전자 서열의 변이(variant)를 표기하기 위한 포맷
+http://www.incodom.kr/VCF
+
+
+5. GenBank
+
+NCBI(National Center for Biotechnology Information)에서 제공.
+염기 서열, CDS (coding sequence) 별로 번역된 아미노산 서열 등의 메타 정보 포함.
+Header, Feature, Sequence 세 부분으로 구성.
+http://www.incodom.kr/Genbank
+
+예제파일: KT225476.2.gbk
