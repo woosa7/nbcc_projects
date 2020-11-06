@@ -3,7 +3,7 @@
 ## ML
 1. basics - lambda, regular expression
 2. crawling - BeautifulSoup, Selenium
-3. linear_regression - 선형회귀, 로지스틱 회귀, Lass & Ridge, ㅖㅊㅁ
+3. linear_regression - 선형회귀, 로지스틱 회귀, Lass & Ridge, 
 4. machine_learning - KNN, LDA, SVM, DT, RF, boosting, ShapValue, clustering, DBSCAN, Class Imbalance (SMOTE)
 5. projects
     * marketing - 광고 키워드 분석, 은행 고객 분석
