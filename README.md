@@ -1,6 +1,6 @@
 # nbcc_on_campus
 
-##ML
+## ML
 1. basics - lambda, regular expression
 2. crawling - BeautifulSoup, Selenium
 3. linear_regression - 선형회귀, 로지스틱 회귀, Lass & Ridge, ㅖㅊㅁ
@@ -10,12 +10,12 @@
     * retail - 쇼핑몰 주문 데이터 분석, 고객 cohort 분석, 로그 분석
     * NYC taxi 수요 분석 - Google BigQuery, Sacred, Feature engineering
 
-##Bioinformatics_1
+## Bioinformatics_1
 biopython, MSA & BALST, SwissProt
 
-##Bioinformatics_2
+## Bioinformatics_2
 NGS, genome data, UniProt, Bio.PDB
 
-##OpenMM tutorials
+## OpenMM tutorials
 simulation, force field, integrator, nonbonded interaction, implicit solvent,
 model building, annealing, reporting.
