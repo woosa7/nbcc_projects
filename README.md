@@ -1,5 +1,9 @@
 # nbcc_on_campus
 
+## Bioinformatics_2
+Biology Meets Programming: Bioinformatics for Beginners (Univ. of California San Diego)
+
+
 ## ML
 1. basics - lambda, regular expression
 2. crawling - BeautifulSoup, Selenium
