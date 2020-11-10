@@ -1,6 +1,6 @@
 # nbcc_on_campus
 
-## Bioinformatics_2
+## Bioinformatics_3
 Biology Meets Programming: Bioinformatics for Beginners (Univ. of California San Diego)
 
 
