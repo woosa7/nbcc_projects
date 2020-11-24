@@ -1,9 +1,5 @@
 # nbcc_on_campus
 
-## Bioinformatics_3
-Biology Meets Programming: Bioinformatics for Beginners (Univ. of California San Diego)
-
-
 ## ML
 1. basics - lambda, regular expression
 2. crawling - BeautifulSoup, Selenium
@@ -13,12 +9,19 @@ Biology Meets Programming: Bioinformatics for Beginners (Univ. of California San
     * marketing - 광고 키워드 분석, 은행 고객 분석
     * retail - 쇼핑몰 주문 데이터 분석, 고객 cohort 분석, 로그 분석
     * NYC taxi 수요 분석 - Google BigQuery, Sacred, Feature engineering
+6. KoNLPy - NLP, text mining
 
-## Bioinformatics_1
-biopython, MSA & BALST, SwissProt
+<br>
 
-## Bioinformatics_2
-NGS, genome data, UniProt, Bio.PDB
+## Bioinformatics
+#### bioinformatics_1 
+- biopython, MSA & BALST, SwissProt
+#### bioinformatics_2 
+- NGS, genome data, UniProt, Bio.PDB
+#### bioinformatics_3
+- Biology Meets Programming: Bioinformatics for Beginners (Univ. of California San Diego)
+
+<br>
 
 ## OpenMM tutorials
 simulation, force field, integrator, nonbonded interaction, implicit solvent,
