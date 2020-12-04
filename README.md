@@ -9,7 +9,7 @@
     * marketing - 광고 키워드 분석, 은행 고객 분석
     * retail - 쇼핑몰 주문 데이터 분석, 고객 cohort 분석, 로그 분석
     * NYC taxi 수요 분석 - Google BigQuery, Sacred, Feature engineering
-6. KoNLPy - NLP, text mining
+6. KoNLPy - NLP, text mining, 영화리뷰 감정분석, 카톡 대화 분석
 
 <br>
 
