@@ -25,31 +25,40 @@ for serialized_examples in dataset.take(1):
     # int64 to int32
     primary = features['primary']
     primary = tf.dtypes.cast(primary, tf.int32)
+    print('primary')
     print(primary.shape)
     print(primary[0].shape)
     print(primary[1].shape)
     print(primary[2].shape)
-    print()
+    # print()
+
+    evolutionary = features['evolutionary']
 
     # convert to one_hot_encoding
     primary = tf.squeeze(primary, axis=2)
-    print(primary.shape)
     one_hot_primary = tf.one_hot(primary, 20)
-    print(one_hot_primary.shape)
 
     # padding
     one_hot_primary = tf.RaggedTensor.to_tensor(one_hot_primary)
-    print(one_hot_primary.shape)
+    print('primary     ', one_hot_primary.shape)
+
+    evolutionary = tf.RaggedTensor.to_tensor(evolutionary)
+    print('evolutionary', evolutionary.shape)
 
     # (batch_size, N, 20) to (N, batch_size, 20)
     one_hot_primary = tf.transpose(one_hot_primary, perm=(1, 0, 2))
-    print(one_hot_primary.shape)
+    print('primary     ', one_hot_primary.shape)
+    evolutionary = tf.transpose(evolutionary, perm=(1, 0, 2))
+    print('evolutionary', evolutionary.shape)
     print()
 
-    print(one_hot_primary[40])
-    print(one_hot_primary[100])
-    print(one_hot_primary[200])
+    inputs = tf.concat((one_hot_primary, evolutionary), axis=2)
+    print('inputs      ', inputs.shape)
+    print()
 
+    print(inputs[40])
+    print(inputs[100])
+    print(inputs[200])
 
 
 
