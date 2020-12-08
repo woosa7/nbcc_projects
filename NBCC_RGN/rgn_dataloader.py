@@ -1,10 +1,14 @@
 import glob
 import tensorflow as tf
 
+tf.random.set_seed(0)
+
 phase = 'testing'
 file_list = sorted(glob.glob('../RGN11/data/ProteinNet11/{}/*'.format(phase)))
 
-dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list)).batch(3)
+batch_size = 3
+
+dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list)).batch(batch_size)
 
 for serialized_examples in dataset.take(1):
 
