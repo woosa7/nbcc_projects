@@ -29,6 +29,11 @@ def get_bi_lstm_model(num_steps):
             keras.layers.LSTM(800, return_sequences=True, dropout=0.5), input_shape=(num_steps, 62), name='bi_lstm'
         )
     )
+    model.add(
+        keras.layers.Bidirectional(
+            keras.layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm_2'
+        )
+    )
     model.summary()
 
     return model
@@ -37,6 +42,6 @@ def get_bi_lstm_model(num_steps):
 batch_size = 32
 num_steps = batch_size
 
-model1 = get_lstm_model(num_steps)
+# model1 = get_lstm_model(num_steps)
 
 model2 = get_bi_lstm_model(num_steps)
