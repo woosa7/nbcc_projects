@@ -1,8 +1,13 @@
 import glob
 import tensorflow as tf
-from tensorflow import keras
+from tensorflow.keras import Sequential, layers, models
+from tensorflow.python.keras import Sequential
+
 
 tf.random.set_seed(100)
+
+# print(tf.test.is_built_with_cuda())
+# print(tf.config.list_physical_devices('GPU'))
 
 phase = 'training'
 file_list = sorted(glob.glob('../RGN11/data/ProteinNet11/{}/*'.format(phase)))
@@ -55,39 +60,66 @@ def get_data():
     return ids, inputs, ter_y
 
 
-def get_model(num_steps):
-    model = keras.Sequential()
+def get_model_old(num_steps):
+    model = Sequential()
 
     # Bi-directional LSTM
-    model.add(keras.layers.Bidirectional(
-        keras.layers.LSTM(800, return_sequences=True, dropout=0.5), input_shape=(num_steps, 62), name='bi_lstm'
+    model.add(layers.Bidirectional(
+        layers.LSTM(800, return_sequences=True, dropout=0.5), input_shape=(num_steps, 62), name='bi_lstm'
     ))
-    model.add(keras.layers.Bidirectional(
-        keras.layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm_2'
+    model.add(layers.Bidirectional(
+        layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm_2'
     ))
 
     # TODO : --> dihedrals (alphabet) --> coordinates
-    model.add(keras.layers.Dense(60, activation='relu'))
-    model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.Dense(3))
-    model.add(keras.layers.Softmax())
+    # model.add(layers.Dense(60, activation='relu'))
+    # model.add(layers.BatchNormalization())
+    # model.add(layers.Dense(3))
+    # model.add(layers.Softmax())
 
     model.compile(optimizer='adam', loss='mse', metrics=['mean_squared_error'])
+    model.summary()
 
+    return model
+
+def get_model(batch_size, alphabet):
+    input_x = layers.Input(shape=(batch_size, 62))
+
+    # Bi-directional LSTM
+    out_x = layers.Bidirectional(layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm1')(input_x)
+    out_x = layers.Bidirectional(layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm2')(out_x)
+
+    # dihedrals
+    out_x = layers.Dense(60, name='flatten')(out_x)
+    flattened_out = tf.reshape(out_x, [-1, 60])
+    out_x = layers.Softmax(name='softmax')(flattened_out)
+
+    sine = tf.matmul(out_x, tf.math.sin(alphabet))
+    cosine = tf.matmul(out_x, tf.math.cos(alphabet))
+    out_x = tf.math.atan2(sine, cosine)
+
+
+    model = models.Model(input_x, out_x)
+
+    model.compile(optimizer='adam', loss='mse', metrics=['mean_squared_error'])
     model.summary()
 
     return model
 
 # --------------------------------------------------------------------------
+# initialize alphabet to random values between -pi and pi
+alphabet = tf.random.uniform(shape=[60,3], minval=-3.14, maxval=3.14)
 
-model = get_model(batch_size)
+# create model
+model = get_model(batch_size, alphabet)
 
-# p_list = []
-for k in range(300):
-    id_list, X, y = get_data()
-    print(X.shape, y.shape)
 
-    hist = model.fit(X, y)
+# # p_list = []
+# for k in range(300):
+#     id_list, X, y = get_data()
+#     print(X.shape, y.shape)
+#
+#     hist = model.fit(X, y)
 
     # -------------------------------
     # 전체 데이터 사용여부 체크
