@@ -1,5 +1,8 @@
 # KoNLPy 사용을 위한 환경설정
 
+pip install tensorflow-gpu
+
+
 ## KoNLPy 설치 - windows 10 (python=3.7)
 
 JDK 1.7+ 설치
