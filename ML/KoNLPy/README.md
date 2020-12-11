@@ -11,7 +11,8 @@ conda create -n konlp python=3.7 anaconda
 conda info --envs
 conda activate konlp
 
-pip install tensorflow-gpu  (v2.3)
+pip install tensorflow  (v2.3)
+pip install gensim
 ```
 
 2. install konlp
@@ -19,7 +20,7 @@ pip install tensorflow-gpu  (v2.3)
 pip install konlpy (JPype1 함께 설치됨)
 ```
 
-3. Mecab 설치 (optional)
+3. Mecab 설치 (windows)
 ```
 https://cleancode-ws.tistory.com/97
 whl 파일은 env 폴더에 복사
