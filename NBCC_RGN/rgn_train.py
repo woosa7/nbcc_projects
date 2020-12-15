@@ -4,8 +4,6 @@ import collections
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
-# tf.compat.v1.disable_eager_execution()
-
 """
 python 3.7
 tensorflow 2.3
@@ -18,8 +16,13 @@ batch_size = 32
 tf.random.set_seed(100)
 
 phase = 'training'
-file_list = sorted(glob.glob('./RGN11/data/ProteinNet11/{}/*'.format(phase)))
-dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list)).batch(batch_size).shuffle(buffer_size=32)
+file_list = glob.glob('../RGN11/data/ProteinNet11/{}/*'.format(phase))
+dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list)).batch(batch_size) #.shuffle(buffer_size=32)
+
+# count : 1329 * 32 = 42528
+dataset = dataset.enumerate(start=0)
+for k, element in dataset.as_numpy_iterator():
+    print(k)
 
 def get_data():
     for serialized_examples in dataset.take(1):
@@ -63,6 +66,9 @@ def get_data():
         ter_y = tertiary[:y_len]
 
     return ids, inputs, ter_y
+
+
+
 
 
 def reduce_mean_angle(weights, angles):
@@ -213,6 +219,58 @@ def point_to_coordinate(pt, num_fragments=6, name=None):
 
         return coords
 
+# ----------------------------------------------------------------------------------
+# def geometric_unit(pred_coords, pred_torsions, bond_angles, bond_lens):
+#     for i in range(3):
+#         # coordinates of last three atoms
+#         A, B, C = pred_coords[-3], pred_coords[-2], pred_coords[-1]
+#
+#         # internal coordinates
+#         T = bond_angles[i]
+#         R = bond_lens[i]
+#         P = pred_torsions[:, i]
+#
+#         # 6x3 one triplet for each sample in the batch
+#         D2 = torch.stack([-R * torch.ones(P.size()) * torch.cos(T),
+#                           R * torch.cos(P) * torch.sin(T),
+#                           R * torch.sin(P) * torch.sin(T)], dim=1)
+#
+#         # bsx3 one triplet for each sample in the batch
+#         BC = C - B
+#         bc = BC / torch.norm(BC, 2, dim=1, keepdim=True)
+#
+#         AB = B - A
+#
+#         N = torch.cross(AB, bc)
+#         n = N / torch.norm(N, 2, dim=1, keepdim=True)
+#
+#         M = torch.stack([bc, torch.cross(n, bc), n], dim=2)
+#
+#         D = torch.bmm(M, D2.view(-1, 3, 1)).squeeze() + C
+#         pred_coords = torch.cat([pred_coords, D.view(1, -1, 3)])
+#
+#     return pred_coords
+
+
+def point_to_coordinate2(dihedrals):
+    cor_A = tf.constant([0., 0., 1.])
+    cor_B = tf.constant([0., 1., 0.])
+    cor_C = tf.constant([1., 0., 0.])
+
+    broadcast = tf.ones((batch_size, 3))
+    print('broadcast :', broadcast.shape)
+
+    pred_coords = tf.stack([cor_A * broadcast, cor_B * broadcast, cor_C * broadcast])
+    print('pred_coords :', pred_coords.shape)
+
+    print(dihedrals.shape)
+
+    for triplet in dihedrals:
+        print(triplet)
+
+    coords = ''
+
+    return coords
 
 def get_model(batch_size, alphabet):
     # (N, 32, 62)
@@ -242,10 +300,10 @@ def get_model(batch_size, alphabet):
 
     # -------------------------------------------------
     # _coordinates
-    points = dihedral_to_point(dihedrals)       # (None, 32, 3)
-    print('points', points.shape)
+    # points = dihedral_to_point(dihedrals)       # (None, 32, 3)
+    # print('points', points.shape)
 
-    coordinates = point_to_coordinate(points)
+    coordinates = point_to_coordinate2(dihedrals)
     # print('coordinates', coordinates.shape)
 
 
@@ -257,12 +315,13 @@ def get_model(batch_size, alphabet):
 
     return model
 
+
 # --------------------------------------------------------------------------
 # initialize alphabet to random values between -pi and pi
 alphabet = tf.random.uniform(shape=[60,3], minval=-3.14, maxval=3.14)
 
 # create model
-model = get_model(batch_size, alphabet)
+# model = get_model(batch_size, alphabet)
 
 # p_list = []
 # for k in range(3000):
