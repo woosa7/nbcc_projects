@@ -16,61 +16,55 @@ batch_size = 32
 tf.random.set_seed(100)
 
 phase = 'training'
-file_list = glob.glob('../RGN11/data/ProteinNet11/{}/*'.format(phase))
-dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list)).batch(batch_size) #.shuffle(buffer_size=32)
+file_list = glob.glob('./RGN11/data/ProteinNet11/{}/*'.format(phase))
+# dataset count : 1329 * 32 = 42528
+dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list, shuffle=True)).batch(batch_size)
 
-# count : 1329 * 32 = 42528
-dataset = dataset.enumerate(start=0)
-for k, element in dataset.as_numpy_iterator():
-    print(k)
+# --------------------------------------------------------------------------
+def get_data(serialized_examples):
+    parsed_examples = tf.io.parse_sequence_example(serialized_examples,
+                            context_features={'id':         tf.io.RaggedFeature(tf.string)},
+                            sequence_features={
+                                            'primary':      tf.io.RaggedFeature(tf.int64),
+                                            'evolutionary': tf.io.RaggedFeature(tf.float32),
+                                            'secondary':    tf.io.RaggedFeature(tf.int64),
+                                            'tertiary':     tf.io.RaggedFeature(tf.float32),
+                                            'mask':         tf.io.RaggedFeature(tf.float32)}
+                                            )
 
-def get_data():
-    for serialized_examples in dataset.take(1):
-        parsed_examples = tf.io.parse_sequence_example(serialized_examples,
-                                context_features={'id':         tf.io.RaggedFeature(tf.string)},
-                                sequence_features={
-                                                'primary':      tf.io.RaggedFeature(tf.int64),
-                                                'evolutionary': tf.io.RaggedFeature(tf.float32),
-                                                'secondary':    tf.io.RaggedFeature(tf.int64),
-                                                'tertiary':     tf.io.RaggedFeature(tf.float32),
-                                                'mask':         tf.io.RaggedFeature(tf.float32)}
-                                                )
+    ids = parsed_examples[0]['id']
+    features = parsed_examples[1]
 
-        ids = parsed_examples[0]['id']
-        features = parsed_examples[1]
+    # int64 to int32
+    primary = features['primary']
+    primary = tf.dtypes.cast(primary, tf.int32)
+    evolutionary = features['evolutionary']
+    tertiary = features['tertiary']
 
-        # int64 to int32
-        primary = features['primary']
-        primary = tf.dtypes.cast(primary, tf.int32)
-        evolutionary = features['evolutionary']
-        tertiary = features['tertiary']
+    # convert to one_hot_encoding
+    primary = tf.squeeze(primary, axis=2)
+    one_hot_primary = tf.one_hot(primary, 20)
 
-        # convert to one_hot_encoding
-        primary = tf.squeeze(primary, axis=2)
-        one_hot_primary = tf.one_hot(primary, 20)
+    # padding
+    one_hot_primary = tf.RaggedTensor.to_tensor(one_hot_primary)
+    evolutionary = tf.RaggedTensor.to_tensor(evolutionary)
+    tertiary = tf.RaggedTensor.to_tensor(tertiary)
 
-        # padding
-        one_hot_primary = tf.RaggedTensor.to_tensor(one_hot_primary)
-        evolutionary = tf.RaggedTensor.to_tensor(evolutionary)
-        tertiary = tf.RaggedTensor.to_tensor(tertiary)
+    # (batch_size, N, 20) to (N, batch_size, 20)
+    one_hot_primary = tf.transpose(one_hot_primary, perm=(1, 0, 2))
+    evolutionary = tf.transpose(evolutionary, perm=(1, 0, 2))
+    tertiary = tf.transpose(tertiary, perm=(1, 0, 2))
 
-        # (batch_size, N, 20) to (N, batch_size, 20)
-        one_hot_primary = tf.transpose(one_hot_primary, perm=(1, 0, 2))
-        evolutionary = tf.transpose(evolutionary, perm=(1, 0, 2))
-        tertiary = tf.transpose(tertiary, perm=(1, 0, 2))
+    inputs = tf.concat((one_hot_primary, evolutionary), axis=2)
 
-        inputs = tf.concat((one_hot_primary, evolutionary), axis=2)
-
-        # TODO
-        y_len = inputs.shape[0]
-        ter_y = tertiary[:y_len]
+    # TODO
+    y_len = inputs.shape[0]
+    ter_y = tertiary[:y_len]
 
     return ids, inputs, ter_y
 
 
-
-
-
+# --------------------------------------------------------------------------
 def reduce_mean_angle(weights, angles):
     """
         weights: [BATCH_SIZE, NUM_ANGLES]
@@ -119,18 +113,13 @@ def dihedral_to_point(dihedral):
     return pt_final
 
 
-@tf.function
 def point_to_coordinate(pt, num_fragments=6, name=None):
     """ Takes points from dihedral_to_point and sequentially converts them into the coordinates of a 3D structure.
-        Reconstruction is done in parallel, by independently reconstructing num_fragments fragments and then
-        reconstituting the chain at the end in reverse order. The core reconstruction algorithm is NeRF, based on
-        DOI: 10.1002/jcc.20237 by Parsons et al. 2005. The parallelized pNERF version is described in
-        DOI: 10.1002/jcc.25772 by AlQuraishi 2019.
     """
 
     with tf.name_scope(name='point_to_coordinate') as scope:
         pt = tf.convert_to_tensor(pt, name='pt')
-        print('pt 1 :', pt)       # (None, 32, 3)
+        # print('pt 1 :', pt.shape)       # (None, 32, 3)
 
         s = tf.shape(pt)[0]     # NUM_STEPS x NUM_DIHEDRALS
 
@@ -150,8 +139,7 @@ def point_to_coordinate(pt, num_fragments=6, name=None):
         pt = tf.reshape(pt, [num_fragments, -1, batch_size, NUM_DIMENSIONS]) # [NUM_FRAGS, FRAG_SIZE,  BATCH_SIZE, NUM_DIMENSIONS]
         pt = tf.transpose(pt, perm=[1, 0, 2, 3])                             # [FRAG_SIZE, NUM_FRAGS,  BATCH_SIZE, NUM_DIMENSIONS]
 
-        print('pt 2 :', pt)     # (None, 6, 32, 3)
-        print()
+        print('pt', pt.shape)     # (None, 6, 32, 3)
 
         # extension function used for single atom reconstruction and whole fragment alignment
         def extend(tri, pt, multi_m):
@@ -178,8 +166,6 @@ def point_to_coordinate(pt, num_fragments=6, name=None):
         print('s_padded :', s_padded)
 
         coords_ta = tf.TensorArray(tf.float32, size=s_padded)
-        print('coords_ta :', coords_ta)
-        print()
 
         def loop_extend(i, tri, coords_ta): # FRAG_SIZE x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS]
             coord = extend(tri, pt[i], True)
@@ -187,19 +173,11 @@ def point_to_coordinate(pt, num_fragments=6, name=None):
 
 
         _, tris, coords_pretrans_ta = tf.while_loop(lambda i, _1, _2: i < s_padded, loop_extend, [i, init_coords, coords_ta])
-
-        # cond, body, loop_vars
-        # cond = lambda i, _1, _2: i < 0
-        # body = lambda i, _1, _2: loop_extend
-        # _, tris, coords_pretrans_ta = tf.while_loop(cond, body, [i, init_coords, coords_ta])
                                       # NUM_DIHEDRALS x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS],
                                       # FRAG_SIZE x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS]
 
-        print('coords_pretrans_ta :', coords_pretrans_ta)
-
         # loop over NUM_FRAGS in reverse order, bringing all the downstream fragments in alignment with current fragment
         coords_pretrans = tf.transpose(coords_pretrans_ta.stack(), perm=[1, 0, 2, 3]) # [NUM_FRAGS, FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
-        print('coords_pretrans :', coords_pretrans)         # (6, None, 32, 3)
 
         i = tf.shape(coords_pretrans)[0] # NUM_FRAGS
 
@@ -209,136 +187,79 @@ def point_to_coordinate(pt, num_fragments=6, name=None):
 
         _, coords_trans = tf.while_loop(lambda i, _: i > -1, loop_trans, [i - 2, coords_pretrans[-1]])
                           # [NUM_FRAGS x FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
-
-        print('coords_trans :', coords_trans)       # (None, 32, 3)
+        # print('coords_trans :', coords_trans.shape)       # (None, 32, 3)
 
         # lose last atom and pad from the front to gain an atom ([0,0,0], consistent with init_mat), to maintain correct atom ordering
         coords = tf.pad(coords_trans[:s-1], [[1, 0], [0, 0], [0, 0]]) # [NUM_STEPS x NUM_DIHEDRALS, BATCH_SIZE, NUM_DIMENSIONS]
-
-        print('coords :', coords)   # (None, 32, 3)
+        print('coords :', coords.shape)   # (None, 32, 3)
 
         return coords
 
-# ----------------------------------------------------------------------------------
-# def geometric_unit(pred_coords, pred_torsions, bond_angles, bond_lens):
-#     for i in range(3):
-#         # coordinates of last three atoms
-#         A, B, C = pred_coords[-3], pred_coords[-2], pred_coords[-1]
-#
-#         # internal coordinates
-#         T = bond_angles[i]
-#         R = bond_lens[i]
-#         P = pred_torsions[:, i]
-#
-#         # 6x3 one triplet for each sample in the batch
-#         D2 = torch.stack([-R * torch.ones(P.size()) * torch.cos(T),
-#                           R * torch.cos(P) * torch.sin(T),
-#                           R * torch.sin(P) * torch.sin(T)], dim=1)
-#
-#         # bsx3 one triplet for each sample in the batch
-#         BC = C - B
-#         bc = BC / torch.norm(BC, 2, dim=1, keepdim=True)
-#
-#         AB = B - A
-#
-#         N = torch.cross(AB, bc)
-#         n = N / torch.norm(N, 2, dim=1, keepdim=True)
-#
-#         M = torch.stack([bc, torch.cross(n, bc), n], dim=2)
-#
-#         D = torch.bmm(M, D2.view(-1, 3, 1)).squeeze() + C
-#         pred_coords = torch.cat([pred_coords, D.view(1, -1, 3)])
-#
-#     return pred_coords
-
-
-def point_to_coordinate2(dihedrals):
-    cor_A = tf.constant([0., 0., 1.])
-    cor_B = tf.constant([0., 1., 0.])
-    cor_C = tf.constant([1., 0., 0.])
-
-    broadcast = tf.ones((batch_size, 3))
-    print('broadcast :', broadcast.shape)
-
-    pred_coords = tf.stack([cor_A * broadcast, cor_B * broadcast, cor_C * broadcast])
-    print('pred_coords :', pred_coords.shape)
-
-    print(dihedrals.shape)
-
-    for triplet in dihedrals:
-        print(triplet)
-
-    coords = ''
-
-    return coords
-
-def get_model(batch_size, alphabet):
-    # (N, 32, 62)
-    input_x = layers.Input(shape=(batch_size, 62))
-
-    # -------------------------------------------------
-    # Bi-directional LSTM
-    out_x = layers.Bidirectional(layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm1')(input_x)
-    out_x = layers.Bidirectional(layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm2')(out_x)
-    # RNN output : (N, 32, 1600)
-
-    # -------------------------------------------------
-    # dihedrals
-    out_x = layers.Dense(60, name='flatten')(out_x)             # (N, 32, 60)
-    num_steps = tf.shape(out_x)[0]
-
-    flat_out_x = tf.reshape(out_x, [-1, 60])
-    flat_out_x = layers.Softmax(name='softmax')(flat_out_x)     # (N, 60)
-    print('softmax', flat_out_x.shape)
-    print('alphabet', alphabet.shape)
-
-    flat_dihedrals = reduce_mean_angle(flat_out_x, alphabet)     # (N, 60) * (60, 3) = (N, 3)
-    print('flat_dihedrals', flat_dihedrals.shape)
-
-    dihedrals = tf.reshape(flat_dihedrals, [num_steps, batch_size, 3])  # (None, 32, 3)
-    print('dihedrals', dihedrals.shape)
-
-    # -------------------------------------------------
-    # _coordinates
-    # points = dihedral_to_point(dihedrals)       # (None, 32, 3)
-    # print('points', points.shape)
-
-    coordinates = point_to_coordinate2(dihedrals)
-    # print('coordinates', coordinates.shape)
-
-
-    # TODO
-    model = models.Model(input_x, dihedrals)
-
-    model.compile(optimizer='adam', loss='mse', metrics=['mean_squared_error'], experimental_run_tf_function=False)
-    # model.summary()
-
-    return model
-
 
 # --------------------------------------------------------------------------
-# initialize alphabet to random values between -pi and pi
-alphabet = tf.random.uniform(shape=[60,3], minval=-3.14, maxval=3.14)
+class NBCC_RGN(models.Model):
 
-# create model
-# model = get_model(batch_size, alphabet)
+    def __init__(self):
+        super(NBCC_RGN, self).__init__()
+
+        # Bi-directional LSTM - output : (N, 32, 1600)
+        self.lstm1 = layers.Bidirectional(layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm1')
+        self.lstm2 = layers.Bidirectional(layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm2')
+
+        # dihedrals
+        self.dense1 = layers.Dense(60, name='flatten')
+        self.softmax = layers.Softmax(name='softmax')
+
+    def call(self, inputs, alphabets):
+        num_steps = inputs.shape[0]
+        print('num_steps', num_steps)
+
+        x = self.lstm1(inputs)
+        x = self.lstm2(x)
+        x = self.dense1(x)
+
+        flat_x = tf.reshape(x, [-1, 60])
+        x = self.softmax(flat_x)
+        print('softmax', x.shape)
+
+        flat_dihedrals = reduce_mean_angle(x, alphabets)  # (N, 60) * (60, 3) = (N, 3)
+        print('flat_dihedrals', flat_dihedrals.shape)
+
+        dihedrals = tf.reshape(flat_dihedrals, [num_steps, batch_size, NUM_DIHEDRALS])  # (None, 32, 3)
+        print('dihedrals', dihedrals.shape)
+
+        points = dihedral_to_point(dihedrals)  # (None, 32, 3)
+        print('points', points.shape)
+
+        coordinates = point_to_coordinate(points)
+        print('coordinates', coordinates.shape)
+
+        print()
+
+
+        return coordinates
+
+
+# ==========================================================================
+# initialize alphabet to random values between -pi and pi
+alphabets = tf.random.uniform(shape=[60,3], minval=-3.14, maxval=3.14)
+
+model = NBCC_RGN()
+# TODO : loss function 추후 개발
+model.compile(optimizer='adam', loss='mse', metrics=['mean_squared_error'])
 
 # p_list = []
-# for k in range(3000):
-#     id_list, X, y = get_data()
-#     print(k+1, X.shape, y.shape)
-#
-#     hist = model.fit(X, y)
+for k, element in enumerate(dataset.repeat()):
+    id_list, X, y = get_data(element)
 
-    # -------------------------------
-    # 전체 데이터 사용여부 체크
+    ouput = model(X, alphabets)
+
     # m = id_list.numpy().tolist()
     # for item in m:
     #     p_list.append(item[0])
-    #
     # if (k+1)%100 == 0:
     #     print(k+1, len(p_list), ':', len(set(p_list)))
-    # -------------------------------
 
+    if k == 2: break
 
 # -------------------------------------------------------------
