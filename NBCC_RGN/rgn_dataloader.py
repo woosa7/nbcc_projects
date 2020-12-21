@@ -1,17 +1,21 @@
 import glob
 import tensorflow as tf
 
-tf.random.set_seed(0)
+NUM_DIHEDRALS = 3
+NUM_DIMENSIONS = 3
 
-phase = 'testing'
-file_list = sorted(glob.glob('../RGN11/data/ProteinNet11/{}/*'.format(phase)))
+batch_size = 32
+tf.random.set_seed(100)
 
-batch_size = 3
+# training dataset
+# all       : 42528 = 32 * 1329
+# less 700  : 41789 = 32 * 1306
 
-dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list)).batch(batch_size)
+phase = 'training'
+file_list = glob.glob('./RGN11/data/ProteinNet11/{}/*'.format(phase))
 
-for serialized_examples in dataset.take(1):
-
+# --------------------------------------------------------------------------
+def mapping_func(serialized_examples):
     parsed_examples = tf.io.parse_sequence_example(serialized_examples,
                             context_features={'id':         tf.io.RaggedFeature(tf.string)},
                             sequence_features={
@@ -24,19 +28,28 @@ for serialized_examples in dataset.take(1):
 
     ids = parsed_examples[0]['id']
     features = parsed_examples[1]
-    print(ids)
 
+    return ids, features
+
+def filter_func(ids, features):
+    primary = features['primary']
+    primary = tf.dtypes.cast(primary, tf.int32)
+
+    pri_length = tf.size(primary)
+    keep = pri_length <= 700
+
+    return keep
+
+
+dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list, shuffle=True)).map(mapping_func).filter(filter_func).batch(batch_size)
+
+
+def get_data(features):
     # int64 to int32
     primary = features['primary']
     primary = tf.dtypes.cast(primary, tf.int32)
-    print('primary')
-    print(primary.shape)
-    print(primary[0].shape)
-    print(primary[1].shape)
-    print(primary[2].shape)
-    # print()
-
     evolutionary = features['evolutionary']
+    tertiary = features['tertiary']
 
     # convert to one_hot_encoding
     primary = tf.squeeze(primary, axis=2)
@@ -44,27 +57,36 @@ for serialized_examples in dataset.take(1):
 
     # padding
     one_hot_primary = tf.RaggedTensor.to_tensor(one_hot_primary)
-    print('primary     ', one_hot_primary.shape)
-
     evolutionary = tf.RaggedTensor.to_tensor(evolutionary)
-    print('evolutionary', evolutionary.shape)
+    tertiary = tf.RaggedTensor.to_tensor(tertiary)
 
     # (batch_size, N, 20) to (N, batch_size, 20)
     one_hot_primary = tf.transpose(one_hot_primary, perm=(1, 0, 2))
-    print('primary     ', one_hot_primary.shape)
     evolutionary = tf.transpose(evolutionary, perm=(1, 0, 2))
-    print('evolutionary', evolutionary.shape)
-    print()
+    tertiary = tf.transpose(tertiary, perm=(1, 0, 2))
 
     inputs = tf.concat((one_hot_primary, evolutionary), axis=2)
-    print('inputs      ', inputs.shape)
-    print()
 
-    print(inputs[40])
-    print(inputs[100])
-    print(inputs[200])
+    # TODO
+    y_len = inputs.shape[0]
+    ter_y = tertiary[:y_len]
 
-
+    return inputs, ter_y
 
 
 
+p_list = []
+# for element in dataset.take(10000):
+for k, element in enumerate(dataset.repeat()):
+    ids = element[0]
+    m = ids.numpy().tolist()
+    for item in m:
+        p_list.append(item[0])
+    if (k+1)%100 == 0:
+        print('----------------', k+1, len(p_list), ':', len(set(p_list)))
+
+    features = element[1]
+    inputs, ter_y = get_data(features)
+
+    if inputs.shape[0] >= 700:
+        print(k, inputs.shape)
