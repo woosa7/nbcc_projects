@@ -148,58 +148,7 @@ def point_to_coordinate(pt, num_fragments=6, name=None):
 
         return coords
 
-
 # --------------------------------------------------------------------------
-class NBCC_RGN(models.Model):
-
-    def __init__(self):
-        super(NBCC_RGN, self).__init__()
-
-        # Bi-directional LSTM
-        self.lstm1 = layers.Bidirectional(layers.LSTM(800, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm1')
-        self.lstm2 = layers.Bidirectional(layers.LSTM(800, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm2')
-
-        # dihedrals
-        self.dense1 = layers.Dense(60, name='flatten')
-        self.softmax = layers.Softmax(name='softmax')
-
-        # initialize alphabet to random values between -pi and pi
-        self.alphabets = tf.random.uniform(shape=[60,3], minval=-3.14, maxval=3.14)
-
-
-    def call(self, inputs):
-        # inputs = data[0]
-        print('inputs', inputs)
-
-        num_steps = inputs.shape[0]
-        print('num_steps', num_steps)
-
-        # inputs : (N, batch_size, 62)
-        x = self.lstm1(inputs)      # output : (N, batch_size, 1600)
-        x = self.lstm2(x)           # output : (N, batch_size, 1600)
-        x = self.dense1(x)
-
-        flat_x = tf.reshape(x, [-1, 60])
-        x = self.softmax(flat_x)
-        # print('softmax', x.shape)
-
-        flat_dihedrals = reduce_mean_angle(x, self.alphabets)  # (N, 60) * (60, 3) = (N, 3)
-        # print('flat_dihedrals', flat_dihedrals.shape)
-
-        dihedrals = tf.reshape(flat_dihedrals, [num_steps, batch_size, NUM_DIHEDRALS])  # (None, 32, 3)
-        # print('dihedrals', dihedrals.shape)
-
-        points = dihedral_to_point(dihedrals)  # (None, 32, 3)
-        # print('points', points.shape)
-
-        coordinates = point_to_coordinate(points)
-        print('coordinates', coordinates.shape)
-
-        print()
-
-
-        return coordinates
-
 
 # ==========================================================================
 # training dataset
@@ -302,7 +251,7 @@ def get_model():
     flat_dihedrals = reduce_mean_angle(flat_out_x, alphabets)     # (N, 60) * (60, 3) = (N, 3)
     dihedrals = tf.reshape(flat_dihedrals, [num_steps, batch_size, 3])  # (None, 32, 3)
 
-    print(dihedrals.shape)
+    # print(dihedrals.shape)
 
     # -------------------------------------------------
     # TODO
@@ -315,6 +264,6 @@ def get_model():
 model = get_model()
 model.compile(optimizer='adam', loss='mse', metrics=['mean_squared_error'], experimental_run_tf_function=False)
 
-history = model.fit(train_data, epochs=2, verbose=1, batch_size=32)
+history = model.fit(train_data, epochs=2, verbose=1)
 
 # -------------------------------------------------------------
