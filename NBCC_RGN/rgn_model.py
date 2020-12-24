@@ -2,7 +2,7 @@ import glob
 import numpy as np
 import collections
 import tensorflow as tf
-from tensorflow.keras import layers, models
+from tensorflow.keras import layers, models, losses, optimizers, metrics
 
 """
 python 3.7
@@ -12,59 +12,13 @@ tensorflow 2.3
 NUM_DIHEDRALS = 3
 NUM_DIMENSIONS = 3
 
+max_length = 700
 batch_size = 32
+alphabet_size = 60
+
 tf.random.set_seed(100)
 
-phase = 'training'
-file_list = glob.glob('../RGN11/data/ProteinNet11/{}/*'.format(phase))
-# dataset count : 1329 * 32 = 42528
-dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list, shuffle=True)).batch(batch_size)
-
-# --------------------------------------------------------------------------
-def get_data(serialized_examples):
-    parsed_examples = tf.io.parse_sequence_example(serialized_examples,
-                            context_features={'id':         tf.io.RaggedFeature(tf.string)},
-                            sequence_features={
-                                            'primary':      tf.io.RaggedFeature(tf.int64),
-                                            'evolutionary': tf.io.RaggedFeature(tf.float32),
-                                            'secondary':    tf.io.RaggedFeature(tf.int64),
-                                            'tertiary':     tf.io.RaggedFeature(tf.float32),
-                                            'mask':         tf.io.RaggedFeature(tf.float32)}
-                                            )
-
-    ids = parsed_examples[0]['id']
-    features = parsed_examples[1]
-
-    # int64 to int32
-    primary = features['primary']
-    primary = tf.dtypes.cast(primary, tf.int32)
-    evolutionary = features['evolutionary']
-    tertiary = features['tertiary']
-
-    # convert to one_hot_encoding
-    primary = tf.squeeze(primary, axis=2)
-    one_hot_primary = tf.one_hot(primary, 20)
-
-    # padding
-    one_hot_primary = tf.RaggedTensor.to_tensor(one_hot_primary)
-    evolutionary = tf.RaggedTensor.to_tensor(evolutionary)
-    tertiary = tf.RaggedTensor.to_tensor(tertiary)
-
-    # (batch_size, N, 20) to (N, batch_size, 20)
-    one_hot_primary = tf.transpose(one_hot_primary, perm=(1, 0, 2))
-    evolutionary = tf.transpose(evolutionary, perm=(1, 0, 2))
-    tertiary = tf.transpose(tertiary, perm=(1, 0, 2))
-
-    inputs = tf.concat((one_hot_primary, evolutionary), axis=2)
-
-    # TODO
-    y_len = inputs.shape[0]
-    ter_y = tertiary[:y_len]
-
-    return ids, inputs, ter_y
-
-
-# --------------------------------------------------------------------------
+# ==========================================================================
 def reduce_mean_angle(weights, angles):
     """
         weights: [BATCH_SIZE, NUM_ANGLES]
@@ -116,103 +70,198 @@ def dihedral_to_point(dihedral):
 def point_to_coordinate(pt, num_fragments=6, name=None):
     """ Takes points from dihedral_to_point and sequentially converts them into the coordinates of a 3D structure.
     """
+    pt = tf.convert_to_tensor(pt, name='pt')
+    s = tf.shape(pt)[0]     # NUM_STEPS x NUM_DIHEDRALS
 
-    with tf.name_scope(name='point_to_coordinate') as scope:
-        pt = tf.convert_to_tensor(pt, name='pt')
-        # print('pt 1 :', pt.shape)       # (None, 32, 3)
+    # initial three coordinates (specifically chosen to eliminate need for extraneous matmul)
+    Triplet = collections.namedtuple('Triplet', 'a, b, c')
 
-        s = tf.shape(pt)[0]     # NUM_STEPS x NUM_DIHEDRALS
+    batch_size = pt.get_shape().as_list()[1] # BATCH_SIZE
+    init_mat = np.array([[-np.sqrt(1.0 / 2.0), np.sqrt(3.0 / 2.0), 0], [-np.sqrt(2.0), 0, 0], [0, 0, 0]], dtype='float32')
+    init_coords = Triplet(*[tf.reshape(tf.tile(row[np.newaxis], tf.stack([num_fragments * batch_size, 1])),
+                                       [num_fragments, batch_size, NUM_DIMENSIONS]) for row in init_mat])
+                                       # NUM_DIHEDRALS x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS]
+                                       # 3 x [6, 32, 3]
 
-        # initial three coordinates (specifically chosen to eliminate need for extraneous matmul)
-        Triplet = collections.namedtuple('Triplet', 'a, b, c')
+    # pad points to yield equal-sized fragments
+    r = ((num_fragments - (s % num_fragments)) % num_fragments)          # (NUM_FRAGS x FRAG_SIZE) - (NUM_STEPS x NUM_DIHEDRALS)
+    pt = tf.pad(pt, [[0, r], [0, 0], [0, 0]])                            # [NUM_FRAGS x FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
+    pt = tf.reshape(pt, [num_fragments, -1, batch_size, NUM_DIMENSIONS]) # [NUM_FRAGS, FRAG_SIZE,  BATCH_SIZE, NUM_DIMENSIONS]
+    pt = tf.transpose(pt, perm=[1, 0, 2, 3])                             # [FRAG_SIZE, NUM_FRAGS,  BATCH_SIZE, NUM_DIMENSIONS]
 
-        batch_size = pt.get_shape().as_list()[1] # BATCH_SIZE
-        init_mat = np.array([[-np.sqrt(1.0 / 2.0), np.sqrt(3.0 / 2.0), 0], [-np.sqrt(2.0), 0, 0], [0, 0, 0]], dtype='float32')
-        init_coords = Triplet(*[tf.reshape(tf.tile(row[np.newaxis], tf.stack([num_fragments * batch_size, 1])),
-                                           [num_fragments, batch_size, NUM_DIMENSIONS]) for row in init_mat])
-                                           # 3 * [6, 32, 3]
-                                           # NUM_DIHEDRALS x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS]
+    # print('pt', pt.shape)     # (None, 6, 32, 3)
 
-        # pad points to yield equal-sized fragments
-        r = ((num_fragments - (s % num_fragments)) % num_fragments)          # (NUM_FRAGS x FRAG_SIZE) - (NUM_STEPS x NUM_DIHEDRALS)
-        pt = tf.pad(pt, [[0, r], [0, 0], [0, 0]])                            # [NUM_FRAGS x FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
-        pt = tf.reshape(pt, [num_fragments, -1, batch_size, NUM_DIMENSIONS]) # [NUM_FRAGS, FRAG_SIZE,  BATCH_SIZE, NUM_DIMENSIONS]
-        pt = tf.transpose(pt, perm=[1, 0, 2, 3])                             # [FRAG_SIZE, NUM_FRAGS,  BATCH_SIZE, NUM_DIMENSIONS]
+    # extension function used for single atom reconstruction and whole fragment alignment
+    def extend(tri, pt, multi_m):
+        """
+        Args:
+            tri: NUM_DIHEDRALS x [NUM_FRAGS/0,         BATCH_SIZE, NUM_DIMENSIONS]
+            pt:                  [NUM_FRAGS/FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
+            multi_m: bool indicating whether m (and tri) is higher rank. pt is always higher rank; what changes is what the first rank is.
+        """
+        bc = tf.nn.l2_normalize(tri.c - tri.b, -1, name='bc')                                        # [NUM_FRAGS/0, BATCH_SIZE, NUM_DIMS]
+        n = tf.nn.l2_normalize(tf.linalg.cross(tri.b - tri.a, bc), -1, name='n')                            # [NUM_FRAGS/0, BATCH_SIZE, NUM_DIMS]
+        if multi_m: # multiple fragments, one atom at a time.
+            m = tf.transpose(tf.stack([bc, tf.linalg.cross(n, bc), n]), perm=[1, 2, 3, 0], name='m')        # [NUM_FRAGS,   BATCH_SIZE, NUM_DIMS, 3 TRANS]
+        else: # single fragment, reconstructed entirely at once.
+            s = tf.pad(tf.shape(pt), [[0, 1]], constant_values=3)                                    # FRAG_SIZE, BATCH_SIZE, NUM_DIMS, 3 TRANS
+            m = tf.transpose(tf.stack([bc, tf.linalg.cross(n, bc), n]), perm=[1, 2, 0])                     # [BATCH_SIZE, NUM_DIMS, 3 TRANS]
+            m = tf.reshape(tf.tile(m, [s[0], 1, 1]), s, name='m')                                    # [FRAG_SIZE, BATCH_SIZE, NUM_DIMS, 3 TRANS]
+        coord = tf.add(tf.squeeze(tf.matmul(m, tf.expand_dims(pt, 3)), axis=3), tri.c, name='coord') # [NUM_FRAGS/FRAG_SIZE, BATCH_SIZE, NUM_DIMS]
+        return coord
 
-        print('pt', pt.shape)     # (None, 6, 32, 3)
+    # loop over FRAG_SIZE in NUM_FRAGS parallel fragments, sequentially generating the coordinates for each fragment across all batches
+    i = tf.constant(0)
+    s_padded = tf.shape(pt)[0]  # FRAG_SIZE : ceil( (NUM_STEPS x 3) / NUM_FRAGS ). NUM_STEPS = 700 --> s_padded = 350
+    print('s_padded', s_padded)
 
-        # extension function used for single atom reconstruction and whole fragment alignment
-        def extend(tri, pt, multi_m):
-            """
-            Args:
-                tri: NUM_DIHEDRALS x [NUM_FRAGS/0,         BATCH_SIZE, NUM_DIMENSIONS]
-                pt:                  [NUM_FRAGS/FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
-                multi_m: bool indicating whether m (and tri) is higher rank. pt is always higher rank; what changes is what the first rank is.
-            """
-            bc = tf.nn.l2_normalize(tri.c - tri.b, -1, name='bc')                                        # [NUM_FRAGS/0, BATCH_SIZE, NUM_DIMS]
-            n = tf.nn.l2_normalize(tf.linalg.cross(tri.b - tri.a, bc), -1, name='n')                            # [NUM_FRAGS/0, BATCH_SIZE, NUM_DIMS]
-            if multi_m: # multiple fragments, one atom at a time.
-                m = tf.transpose(tf.stack([bc, tf.linalg.cross(n, bc), n]), perm=[1, 2, 3, 0], name='m')        # [NUM_FRAGS,   BATCH_SIZE, NUM_DIMS, 3 TRANS]
-            else: # single fragment, reconstructed entirely at once.
-                s = tf.pad(tf.shape(pt), [[0, 1]], constant_values=3)                                    # FRAG_SIZE, BATCH_SIZE, NUM_DIMS, 3 TRANS
-                m = tf.transpose(tf.stack([bc, tf.linalg.cross(n, bc), n]), perm=[1, 2, 0])                     # [BATCH_SIZE, NUM_DIMS, 3 TRANS]
-                m = tf.reshape(tf.tile(m, [s[0], 1, 1]), s, name='m')                                    # [FRAG_SIZE, BATCH_SIZE, NUM_DIMS, 3 TRANS]
-            coord = tf.add(tf.squeeze(tf.matmul(m, tf.expand_dims(pt, 3)), axis=3), tri.c, name='coord') # [NUM_FRAGS/FRAG_SIZE, BATCH_SIZE, NUM_DIMS]
-            return coord
+    coords_ta = tf.TensorArray(tf.float32, size=s_padded)                 # original code. s_padded = None
 
-        # loop over FRAG_SIZE in NUM_FRAGS parallel fragments, sequentially generating the coordinates for each fragment across all batches
-        i = tf.constant(0)
-        s_padded = tf.shape(pt)[0]
-        print('s_padded :', s_padded)
+    def loop_extend(i, tri, coords_ta): # FRAG_SIZE x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS]
+        coord = extend(tri, pt[i], True)
+        return [i + 1, Triplet(tri.b, tri.c, coord), coords_ta.write(i, coord)]
 
-        coords_ta = tf.TensorArray(tf.float32, size=s_padded)
+    # original code.
+    # NUM_DIHEDRALS x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS],
+    # FRAG_SIZE x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS]
 
-        def loop_extend(i, tri, coords_ta): # FRAG_SIZE x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS]
-            coord = extend(tri, pt[i], True)
-            return [i + 1, Triplet(tri.b, tri.c, coord), coords_ta.write(i, coord)]
+    # cond      : lambda i, _1, _2: i < s_padded
+    # body      : lambda i, _1, _2: loop_extend
+    # loop_vars : [i, init_coords, coords_ta]
+    _, tris, coords_pretrans_ta = tf.while_loop(lambda i, _1, _2: i < s_padded, loop_extend, [i, init_coords, coords_ta])
 
+    # ---------------------------
+    # tris = init_coords
+    # coords_pretrans_ta = coords_ta
+    # while i < s_padded:
+    #     _, tris, coords_pretrans_ta = loop_extend(i, init_coords, coords_ta)
+    # ---------------------------
 
-        _, tris, coords_pretrans_ta = tf.while_loop(lambda i, _1, _2: i < s_padded, loop_extend, [i, init_coords, coords_ta])
-                                      # NUM_DIHEDRALS x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS],
-                                      # FRAG_SIZE x [NUM_FRAGS, BATCH_SIZE, NUM_DIMENSIONS]
+    # loop over NUM_FRAGS in reverse order, bringing all the downstream fragments in alignment with current fragment
+    coords_pretrans = tf.transpose(coords_pretrans_ta.stack(), perm=[1, 0, 2, 3]) # [NUM_FRAGS, FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
 
-        # loop over NUM_FRAGS in reverse order, bringing all the downstream fragments in alignment with current fragment
-        coords_pretrans = tf.transpose(coords_pretrans_ta.stack(), perm=[1, 0, 2, 3]) # [NUM_FRAGS, FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
+    # i = tf.shape(coords_pretrans)[0] # NUM_FRAGS
+    i = num_fragments
+    # print('coords_pretrans', coords_pretrans.shape)
+    # print(i)
 
-        i = tf.shape(coords_pretrans)[0] # NUM_FRAGS
+    def loop_trans(i, coords):
+        transformed_coords = extend(Triplet(*[di[i] for di in tris]), coords, False)
+        return [i - 1, tf.concat([coords_pretrans[i], transformed_coords], 0)]
 
-        def loop_trans(i, coords):
-            transformed_coords = extend(Triplet(*[di[i] for di in tris]), coords, False)
-            return [i - 1, tf.concat([coords_pretrans[i], transformed_coords], 0)]
+    _, coords_trans = tf.while_loop(lambda i, _: i > -1, loop_trans, [i - 2, coords_pretrans[-1]])
+                      # [NUM_FRAGS x FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
+    # print('coords_trans :', coords_trans.shape)       # (None, 32, 3)
 
-        _, coords_trans = tf.while_loop(lambda i, _: i > -1, loop_trans, [i - 2, coords_pretrans[-1]])
-                          # [NUM_FRAGS x FRAG_SIZE, BATCH_SIZE, NUM_DIMENSIONS]
-        # print('coords_trans :', coords_trans.shape)       # (None, 32, 3)
+    # lose last atom and pad from the front to gain an atom ([0,0,0], consistent with init_mat), to maintain correct atom ordering
+    coords = tf.pad(coords_trans[:s-1], [[1, 0], [0, 0], [0, 0]]) # [NUM_STEPS x NUM_DIHEDRALS, BATCH_SIZE, NUM_DIMENSIONS]
+    # print('coords :', coords.shape)   # (None, 32, 3)
 
-        # lose last atom and pad from the front to gain an atom ([0,0,0], consistent with init_mat), to maintain correct atom ordering
-        coords = tf.pad(coords_trans[:s-1], [[1, 0], [0, 0], [0, 0]]) # [NUM_STEPS x NUM_DIHEDRALS, BATCH_SIZE, NUM_DIMENSIONS]
-        print('coords :', coords.shape)   # (None, 32, 3)
-
-        return coords
-
+    return coords
 
 # --------------------------------------------------------------------------
+
+# ==========================================================================
+# training dataset
+# all       : 42528 % 32 = 1329
+# less 700  : 41789 % 32 = 1305
+# --------------------------------------------------------------------------
+"""
+Data Loader
+"""
+def mapping_func(serialized_examples):
+    parsed_examples = tf.io.parse_sequence_example(serialized_examples,
+                            context_features={'id':         tf.io.RaggedFeature(tf.string)},
+                            sequence_features={
+                                            'primary':      tf.io.RaggedFeature(tf.int64),
+                                            'evolutionary': tf.io.RaggedFeature(tf.float32),
+                                            'secondary':    tf.io.RaggedFeature(tf.int64),
+                                            'tertiary':     tf.io.RaggedFeature(tf.float32),
+                                            'mask':         tf.io.RaggedFeature(tf.float32)}
+                                            )
+
+    ids = parsed_examples[0]['id']
+    features = parsed_examples[1]
+
+    return features, ids
+
+def filter_func(features, ids):
+    primary = features['primary']
+
+    pri_length = tf.size(primary)
+    keep = pri_length <= max_length
+
+    return keep
+
+def get_data(features):
+    # int64 to int32
+    primary = features['primary']
+    primary = tf.dtypes.cast(primary, tf.int32)
+    evolutionary = features['evolutionary']
+    tertiary = features['tertiary']
+
+    # convert to one_hot_encoding
+    primary = tf.squeeze(primary, axis=2)
+    one_hot_primary = tf.one_hot(primary, 20)
+
+    # padding
+    one_hot_primary = tf.RaggedTensor.to_tensor(one_hot_primary)
+    evolutionary = tf.RaggedTensor.to_tensor(evolutionary)
+    tertiary = tf.RaggedTensor.to_tensor(tertiary)
+
+    # (batch_size, N, 20) to (N, batch_size, 20)
+    one_hot_primary = tf.transpose(one_hot_primary, perm=(1, 0, 2))
+    evolutionary = tf.transpose(evolutionary, perm=(1, 0, 2))
+    tertiary = tf.transpose(tertiary, perm=(1, 0, 2))
+
+    inputs = tf.concat((one_hot_primary, evolutionary), axis=2)
+
+    # TODO
+    y_len = inputs.shape[0]
+    ter_y = tertiary #[:y_len]
+
+    return inputs, ter_y
+
+"""
+Data Generator
+"""
+phase = 'training'
+file_list = glob.glob('./RGN11/data/ProteinNet11/{}/*'.format(phase))
+
+train_dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list, shuffle=True)).map(mapping_func).filter(filter_func).batch(batch_size, drop_remainder=True).prefetch(1)
+
+def generator():
+    for element in train_dataset:
+        features = element[0]
+        ids = element[1]
+        inputs, ter_y = get_data(features)
+        yield inputs, ter_y #, ids
+
+
+# train_data = tf.data.Dataset.from_generator(generator, output_types=(tf.float32, tf.float32, tf.string))
+train_data = tf.data.Dataset.from_generator(generator, output_types=(tf.float32, tf.float32))
+
+# ==========================================================================
+
 class NBCC_RGN(models.Model):
 
     def __init__(self):
         super(NBCC_RGN, self).__init__()
 
+        # alphabetInit {'range':3.14159,'dist':'uniform'}
+        self.alphabets = tf.random.uniform(shape=[alphabet_size, NUM_DIHEDRALS], minval=-3.14159, maxval=3.14159)
+
         # Bi-directional LSTM - output : (N, 32, 1600)
-        self.lstm1 = layers.Bidirectional(layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm1')
-        self.lstm2 = layers.Bidirectional(layers.LSTM(800, return_sequences=True, dropout=0.5), name='bi_lstm2')
+        self.lstm1 = layers.Bidirectional(layers.LSTM(800, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm1')
+        self.lstm2 = layers.Bidirectional(layers.LSTM(800, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm2')
 
         # dihedrals
         self.dense1 = layers.Dense(60, name='flatten')
         self.softmax = layers.Softmax(name='softmax')
 
-    def call(self, inputs, alphabets):
+    def call(self, inputs):
         num_steps = inputs.shape[0]
-        print('num_steps', num_steps)
+        print('inputs', inputs.shape)
 
         x = self.lstm1(inputs)
         x = self.lstm2(x)
@@ -220,44 +269,36 @@ class NBCC_RGN(models.Model):
 
         flat_x = tf.reshape(x, [-1, 60])
         x = self.softmax(flat_x)
-        print('softmax', x.shape)
 
-        flat_dihedrals = reduce_mean_angle(x, alphabets)  # (N, 60) * (60, 3) = (N, 3)
-        print('flat_dihedrals', flat_dihedrals.shape)
-
+        flat_dihedrals = reduce_mean_angle(x, self.alphabets)  # (N, 60) * (60, 3) = (N, 3)
         dihedrals = tf.reshape(flat_dihedrals, [num_steps, batch_size, NUM_DIHEDRALS])  # (None, 32, 3)
         print('dihedrals', dihedrals.shape)
 
         points = dihedral_to_point(dihedrals)  # (None, 32, 3)
-        print('points', points.shape)
-
         coordinates = point_to_coordinate(points)
         print('coordinates', coordinates.shape)
 
-        print()
 
 
         return coordinates
 
+# -------------------------------
+model = NBCC_RGN()
+optimizer = optimizers.Adam(learning_rate=0.001)
+train_metric = metrics.MeanSquaredError()
+
+for x, y in train_data.take(5):
+    with tf.GradientTape() as tape:
+        pred = model(x)
+        loss_value = losses.MSE(y, pred)
+
+    grads = tape.gradient(loss_value, model.trainable_weights)
+    optimizer.apply_gradients(zip(grads, model.trainable_weights))
+
+    train_metric.update_state(y, pred)
+
+    train_mse = train_metric.result()
+    print(float(train_mse))
+    print()
 
 # ==========================================================================
-# initialize alphabet to random values between -pi and pi
-alphabets = tf.random.uniform(shape=[60,3], minval=-3.14, maxval=3.14)
-
-model = NBCC_RGN()
-# TODO : loss function 추후 개발
-model.compile(optimizer='adam', loss='mse', metrics=['mean_squared_error'])
-
-# p_list = []
-for k, element in enumerate(dataset.repeat()):
-    id_list, X, y = get_data(element)
-
-    ouput = model(X, alphabets)
-
-    # m = id_list.numpy().tolist()
-    # for item in m:
-    #     p_list.append(item[0])
-    # if (k+1)%100 == 0:
-    #     print(k+1, len(p_list), ':', len(set(p_list)))
-
-# -------------------------------------------------------------
