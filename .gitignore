@@ -137,3 +137,5 @@ dmypy.json
 /debug.log
 /RGN11/
 /NBCC_RGN/RGN11/
+/ML/fabric_image_detection/dataset/
+/ML/fabric_image_detection/data/
