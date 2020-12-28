@@ -4,17 +4,14 @@ import tensorflow as tf
 NUM_DIHEDRALS = 3
 NUM_DIMENSIONS = 3
 
-batch_size = 32
+batch_size = 3
 tf.random.set_seed(100)
 
-# training dataset
-# all       : 42528 = 32 * 1329
-# less 700  : 41789 = 32 * 1306
+max_length = 700
 
-phase = 'training'
-file_list = glob.glob('./RGN11/data/ProteinNet11/{}/*'.format(phase))
-
-# --------------------------------------------------------------------------
+"""
+Data Loader
+"""
 def mapping_func(serialized_examples):
     parsed_examples = tf.io.parse_sequence_example(serialized_examples,
                             context_features={'id':         tf.io.RaggedFeature(tf.string)},
@@ -29,20 +26,15 @@ def mapping_func(serialized_examples):
     ids = parsed_examples[0]['id']
     features = parsed_examples[1]
 
-    return ids, features
+    return features, ids
 
-def filter_func(ids, features):
+def filter_func(features, ids):
     primary = features['primary']
-    primary = tf.dtypes.cast(primary, tf.int32)
 
     pri_length = tf.size(primary)
-    keep = pri_length <= 700
+    keep = pri_length <= max_length
 
     return keep
-
-
-dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list, shuffle=True)).map(mapping_func).filter(filter_func).batch(batch_size)
-
 
 def get_data(features):
     # int64 to int32
@@ -50,6 +42,7 @@ def get_data(features):
     primary = tf.dtypes.cast(primary, tf.int32)
     evolutionary = features['evolutionary']
     tertiary = features['tertiary']
+    mask = features['mask']
 
     # convert to one_hot_encoding
     primary = tf.squeeze(primary, axis=2)
@@ -59,6 +52,9 @@ def get_data(features):
     one_hot_primary = tf.RaggedTensor.to_tensor(one_hot_primary)
     evolutionary = tf.RaggedTensor.to_tensor(evolutionary)
     tertiary = tf.RaggedTensor.to_tensor(tertiary)
+    mask = tf.RaggedTensor.to_tensor(mask)
+    if tf.shape(mask)[1] == 0:
+        raise RuntimeError('mask size is 0')
 
     # (batch_size, N, 20) to (N, batch_size, 20)
     one_hot_primary = tf.transpose(one_hot_primary, perm=(1, 0, 2))
@@ -67,26 +63,58 @@ def get_data(features):
 
     inputs = tf.concat((one_hot_primary, evolutionary), axis=2)
 
-    # TODO
-    y_len = inputs.shape[0]
-    ter_y = tertiary[:y_len]
+    return inputs, tertiary, mask
 
-    return inputs, ter_y
+"""
+Data Generator
+"""
+phase = 'training'
+file_list = glob.glob('./RGN11/data/ProteinNet11/{}/*'.format(phase))
+
+train_dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list, shuffle=True)).map(mapping_func).filter(filter_func).batch(batch_size, drop_remainder=True).prefetch(1)
+
+def generator():
+    for element in train_dataset:
+        features = element[0]
+        ids = element[1]
+        inputs, ter_y, masks = get_data(features)
+        yield inputs, ter_y, masks, ids
 
 
+train_data = tf.data.Dataset.from_generator(generator, output_types=(tf.float32, tf.float32, tf.float32, tf.string))
+# train_data = tf.data.Dataset.from_generator(generator, output_types=(tf.float32, tf.float32))
 
-p_list = []
-# for element in dataset.take(10000):
-for k, element in enumerate(dataset.repeat()):
-    ids = element[0]
-    m = ids.numpy().tolist()
-    for item in m:
-        p_list.append(item[0])
-    if (k+1)%100 == 0:
-        print('----------------', k+1, len(p_list), ':', len(set(p_list)))
 
-    features = element[1]
-    inputs, ter_y = get_data(features)
+# -----------------------------------------------------------------
+def masking_matrix(mask, name=None):
+    with tf.name_scope('masking_matrix') as scope:
+        mask = tf.convert_to_tensor(mask, name='mask')
 
-    if inputs.shape[0] >= 700:
-        print(k, inputs.shape)
+        mask = tf.expand_dims(mask, 0)
+        base = tf.ones([tf.size(mask), tf.size(mask)])
+        matrix_mask = base * mask * tf.transpose(mask)
+
+        return matrix_mask
+
+# -----------------------------------------------------------------
+for x, y, masks, ids in train_data.take(1):
+    print()
+    print(x.shape)
+    # print(y.shape)
+    # print(ids.shape)
+
+    print('masks', masks.shape)
+    _masks = []
+    for i in range(masks.shape[0]):
+        a = tf.squeeze(tf.transpose(masks[i]), axis=0)
+        c = masking_matrix(a)
+        print(i, a.shape, c.shape)
+        _masks.append(c)
+
+    ter_masks = tf.convert_to_tensor(_masks)
+    print('ter_masks', ter_masks.shape)
+    ter_masks = tf.transpose(ter_masks, perm=(1, 2, 0), name='masks')
+    print('ter_masks', ter_masks.shape)
+
+
+# --------------------------------------------------------------------------------------------------------------------
