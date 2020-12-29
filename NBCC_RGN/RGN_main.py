@@ -23,6 +23,7 @@ include_loss = True
 loss_atoms = 'c_alpha'
 tertiary_weight = 1.0
 tertiary_normalization = 'first'
+batch_dependent_normalization = True
 
 tf.random.set_seed(100)
 
@@ -134,6 +135,60 @@ def _drmsds(coordinates, targets, weights):
     #     tf.add_to_collection(config['name'] + '_drmsdss', drmsds)
 
     return drmsds
+
+def effective_steps(masks, num_edge_residues, name=None):
+    """ Returns the effective number of steps, i.e. number of residues that are non-missing and are not just padding, given a masking matrix.
+
+    Args:
+        masks: A batch of square masking matrices (batch is last dimension)
+        [MAX_SEQ_LENGTH, MAX_SEQ_LENGTH, BATCH_SIZE]
+
+    Returns:
+        A vector with the effective number of steps
+        [BATCH_SIZE]
+    """
+
+    with tf.name_scope('effective_steps') as scope:
+        masks = tf.convert_to_tensor(masks, name='masks')
+
+        # NBCC modified for tf 2.0
+        # traces = tf.matrix_diag_part(tf.transpose(masks, [2, 0, 1]))
+        traces = tf.linalg.diag_part(tf.transpose(masks, [2, 0, 1]))
+        eff_stepss = tf.add(tf.reduce_sum(traces, [1]), num_edge_residues, name=scope) # NUM_EDGE_RESIDUES shouldn't be here, but I'm keeping it for
+                                                                                       # legacy reasons. Just be clear that it's _always_ wrong to have
+                                                                                       # it here, even when it's not equal to 0.
+        return eff_stepss
+
+def _reduce_loss_quotient(config, losses, masks, group_filter, name_prefix=''):
+    """ Reduces loss according to normalization order.
+        losses = drmsds
+    """
+    # NBCC modified for tf 2.0
+    normalization = config['tertiary_normalization']   # firs
+    batch_dependent_normalization = config['batch_dependent_normalization']   # True
+    max_seq_length = config['max_seq_length']
+
+    losses_filtered = tf.boolean_mask(losses, group_filter) # it will give problematic results if all entries are removed
+
+    if normalization == 'zeroth':
+        loss_factors = tf.ones_like(losses_filtered)
+    elif normalization == 'first':
+        loss_factors = tf.boolean_mask(effective_steps(masks, num_edge_residues), group_filter)
+        fixed_denominator_factor = float(max_seq_length - num_edge_residues)
+    elif normalization == 'second':
+        eff_num_stepss = tf.boolean_mask(effective_steps(masks, num_edge_residues), group_filter)
+        loss_factors = (tf.square(eff_num_stepss) - eff_num_stepss) / 2.0
+        fixed_denominator_factor = float(max_seq_length - num_edge_residues)
+        fixed_denominator_factor = ((fixed_denominator_factor ** 2) - fixed_denominator_factor) / 2.0
+
+    numerator = tf.reduce_sum(loss_factors * losses_filtered, name=name_prefix + '_numerator')
+
+    if batch_dependent_normalization or normalization == 'zeroth':
+        denominator = tf.reduce_sum(loss_factors, name=name_prefix + '_denominator')
+    else:
+        denominator = tf.multiply(tf.cast(tf.size(loss_factors), tf.float32), fixed_denominator_factor, name=name_prefix + '_denominator')
+
+    return numerator, denominator
 
 # ==========================================================================
 """
@@ -268,7 +323,7 @@ current_epoch = 0
 for epoch in range(total_epochs):
     # training
     for inputs, tertiaries, masks, ids in train_data:
-        print('inputs   ', x.shape)
+        print('inputs', inputs.shape)
 
         # --------------------------------------------
         # tertiary masks
@@ -283,6 +338,14 @@ for epoch in range(total_epochs):
         weights, _ = _weights(ter_masks)
 
         # --------------------------------------------
+        # for dRMSD LOSS
+        filters = {'all': tf.tile([True], [batch_size,])}  # training mode
+        group_filter = filters['all']
+        config_loss = {'tertiary_normalization': 'first',
+                       'batch_dependent_normalization': True,
+                       'max_seq_length': max_length}
+
+        # --------------------------------------------
         with tf.GradientTape() as tape:
             pred_coord = model(inputs)
 
@@ -293,18 +356,19 @@ for epoch in range(total_epochs):
             # -------------------------------------------------
             # dRMSD LOSS
             drmsds = _drmsds(pred_coord, tertiaries, weights)
-            print('drmsds', drmsds)
+            # print('drmsds', drmsds)
 
-            # _reduce_loss_quotient()
+            tertiary_loss_numerator, tertiary_loss_denominator = _reduce_loss_quotient(config_loss, drmsds, ter_masks, group_filter)
+            print(tertiary_loss_numerator)
+            print(tertiary_loss_denominator)
+
             # _accumulate_loss()
-
-
 
 
         grads = tape.gradient(loss_value, model.trainable_weights)
         optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-        train_metric.update_state(tertiaries, pred)
+        train_metric.update_state(tertiaries, pred_coord)
         train_mse = train_metric.result()
 
         current_step += 1
