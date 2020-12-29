@@ -1,0 +1,319 @@
+import glob
+import numpy as np
+import collections
+import tensorflow as tf
+from tensorflow.keras import layers, models, losses, optimizers, metrics
+from geom_ops import reduce_mean_angle, dihedral_to_point, point_to_coordinate, drmsd
+
+"""
+python 3.7
+tensorflow 2.3
+"""
+
+NUM_DIHEDRALS = 3
+NUM_DIMENSIONS = 3
+
+batch_size = 32
+
+max_length = 700
+alphabet_size = 60
+num_edge_residues = 0
+
+include_loss = True
+loss_atoms = 'c_alpha'
+tertiary_weight = 1.0
+tertiary_normalization = 'first'
+
+tf.random.set_seed(100)
+
+# ==========================================================================
+def masking_matrix(mask, name=None):
+    """ Constructs a masking matrix to zero out pairwise distances due to missing residues or padding.
+        This function needs to be called for each individual sequence, and so it's folded in the reading/queuing pipeline for performance reasons.
+
+    Args:
+        mask: 0/1 vector indicating whether a position should be masked (0) or not (1)
+
+    Returns:
+        A square matrix with all 1s except for rows and cols whose corresponding indices in mask are set to 0.
+        [MAX_SEQ_LENGTH, MAX_SEQ_LENGTH]
+    """
+
+    with tf.name_scope('masking_matrix') as scope:
+        mask = tf.convert_to_tensor(mask, name='mask')
+        mask = tf.expand_dims(mask, 0)
+        base = tf.ones([tf.size(mask), tf.size(mask)])
+        matrix_mask = base * mask * tf.transpose(mask)
+
+        return matrix_mask
+
+def weighting_matrix(weights, name=None):
+    """ Takes a vector of weights and returns a weighting matrix in which the ith weight is in the ith upper diagonal of the matrix. All other entries are 0.
+        This functions needs to be called once per curriculum update / iteration, but then used for the entire batch.
+
+        This function intimately mixes python and TF code. It can do so because all the python code
+        needs to be run only once during the initial construction phase and does not rely on any
+        tensor values. This interaction is subtle however.
+
+    Args:
+        weights: Curriculum weights. A TF tensor that is expected to change as curriculum progresses. [MAX_SEQ_LENGTH - 1]
+
+    Returns
+        [MAX_SEQ_LENGTH, MAX_SEQ_LENGTH]
+    """
+
+    with tf.name_scope('weighting_matrix') as scope:
+        weights = tf.convert_to_tensor(weights, name='weights')
+
+        max_seq_length = weights.get_shape().as_list()[0] + 1
+        split_indices = np.diag_indices(max_seq_length)
+
+        flat_indices = []
+        flat_weights = []
+        for i in range(max_seq_length - 1):
+            indices_subset = np.concatenate((split_indices[0][:-(i+1), np.newaxis], split_indices[1][i+1:, np.newaxis]), 1)
+            weights_subset = tf.fill([len(indices_subset)], weights[i])
+            flat_indices.append(indices_subset)
+            flat_weights.append(weights_subset)
+        flat_indices = np.concatenate(flat_indices)
+        flat_weights = tf.concat(flat_weights, 0)
+
+        # NBCC modified for tf 2.0
+        # tf 1.0 : sparse_indices, output_shape, sparse_values
+        # mat = tf.sparse_to_dense(flat_indices, [max_seq_length, max_seq_length], flat_weights, validate_indices=False, name=scope)
+
+        # indices, values, dense_shape
+        mat_st = tf.sparse.SparseTensor(flat_indices, flat_weights, [max_seq_length, max_seq_length])
+        mat = tf.sparse.to_dense(mat_st, validate_indices=False)
+
+        return mat
+
+def _weights(masks):
+    """ Returns dRMSD weights that mask meaningless (missing or longer than sequence residues) pairwise distances and incorporate the state of
+        the curriculum to differentially weigh pairwise distances based on their proximity.
+        num_edge_residues = 0
+    """
+
+    # loss_atoms = 'c_alpha' & config['mode'] = None:
+    # no loss-based curriculum, create fixed weighting matrix that weighs all distances equally.
+    # minus one factor is there because we ignore self-distances.
+    flat_curriculum_weights = np.ones(max_length - num_edge_residues - 1, dtype='float32')
+
+    # weighting matrix for entire batch that accounts for curriculum weighting.
+    unnormalized_weights = weighting_matrix(flat_curriculum_weights, name='unnormalized_weights')
+                           # [NUM_STEPS - NUM_EDGE_RESIDUES, NUM_STEPS - NUM_EDGE_RESIDUES]
+
+    # create final weights by multiplying with masks and normalizing.
+    mask_length = tf.shape(masks)[0]
+    unnormalized_masked_weights = masks * unnormalized_weights[:mask_length, :mask_length, tf.newaxis]
+
+    masked_weights = tf.math.divide(unnormalized_masked_weights,
+                                    tf.reduce_sum(unnormalized_masked_weights, axis=[0, 1]),
+                                    name='weights')
+
+    return masked_weights, flat_curriculum_weights
+
+def _drmsds(coordinates, targets, weights):
+    """ Computes reduced weighted dRMSD loss (as specified by weights)
+        between predicted tertiary structures and targets. """
+
+    # lose end residues if desired
+    if num_edge_residues > 0:
+        coordinates = coordinates[:-(num_edge_residues * NUM_DIHEDRALS)]
+
+    # if only c_alpha atoms are requested then subsample
+    if loss_atoms == 'c_alpha': # starts at 1 because c_alpha atoms are the second atoms
+        coordinates = coordinates[1::NUM_DIHEDRALS] # [NUM_STEPS - NUM_EDGE_RESIDUES, BATCH_SIZE, NUM_DIMENSIONS]
+        targets     =     targets[1::NUM_DIHEDRALS] # [NUM_STEPS - NUM_EDGE_RESIDUES, BATCH_SIZE, NUM_DIMENSIONS]
+
+    # compute per structure dRMSDs
+    drmsds = drmsd(coordinates, targets, weights, name='drmsds') # [BATCH_SIZE]
+
+    # add to relevant collections for summaries, etc.
+    # if config['log_model_summaries']:
+    #     tf.add_to_collection(config['name'] + '_drmsdss', drmsds)
+
+    return drmsds
+
+# ==========================================================================
+"""
+Data Loader
+
+training dataset
+all       : 42528 % 32 = 1329
+less 700  : 41789 % 32 = 1305
+"""
+
+def mapping_func(serialized_examples):
+    parsed_examples = tf.io.parse_sequence_example(serialized_examples,
+                            context_features={'id':         tf.io.RaggedFeature(tf.string)},
+                            sequence_features={
+                                            'primary':      tf.io.RaggedFeature(tf.int64),
+                                            'evolutionary': tf.io.RaggedFeature(tf.float32),
+                                            'secondary':    tf.io.RaggedFeature(tf.int64),
+                                            'tertiary':     tf.io.RaggedFeature(tf.float32),
+                                            'mask':         tf.io.RaggedFeature(tf.float32)}
+                                            )
+
+    ids = parsed_examples[0]['id']
+    features = parsed_examples[1]
+
+    return features, ids
+
+def filter_func(features, ids):
+    primary = features['primary']
+
+    pri_length = tf.size(primary)
+    keep = pri_length <= max_length
+
+    return keep
+
+def get_data(features):
+    # int64 to int32
+    primary = features['primary']
+    primary = tf.dtypes.cast(primary, tf.int32)
+    evolutionary = features['evolutionary']
+    tertiary = features['tertiary']
+    mask = features['mask']
+
+    # convert to one_hot_encoding
+    primary = tf.squeeze(primary, axis=2)
+    pri_length = primary.shape[0]
+    one_hot_primary = tf.one_hot(primary, 20)
+
+    # padding
+    one_hot_primary = tf.RaggedTensor.to_tensor(one_hot_primary)
+    evolutionary = tf.RaggedTensor.to_tensor(evolutionary)
+    tertiary = tf.RaggedTensor.to_tensor(tertiary)
+    mask = tf.RaggedTensor.to_tensor(mask)
+    if tf.shape(mask)[1] == 0:
+        raise RuntimeError('mask size is 0')
+
+    # (batch_size, N, 20) to (N, batch_size, 20)
+    one_hot_primary = tf.transpose(one_hot_primary, perm=(1, 0, 2))
+    evolutionary = tf.transpose(evolutionary, perm=(1, 0, 2))
+    tertiary = tf.transpose(tertiary, perm=(1, 0, 2))
+
+    inputs = tf.concat((one_hot_primary, evolutionary), axis=2)
+
+    return inputs, tertiary, mask
+
+"""
+Data Generator
+"""
+phase = 'training'
+file_list = glob.glob('./RGN11/data/ProteinNet11/{}/*'.format(phase))
+
+train_dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list, shuffle=True)).map(mapping_func).filter(filter_func).batch(batch_size, drop_remainder=True).prefetch(1)
+
+def generator():
+    for element in train_dataset:
+        features = element[0]
+        ids = element[1]
+        inputs, tertiaries, ter_masks = get_data(features)
+        yield inputs, tertiaries, ter_masks, ids
+
+train_data = tf.data.Dataset.from_generator(generator, output_types=(tf.float32, tf.float32, tf.float32, tf.string))
+
+# ==========================================================================
+class NBCC_RGN(models.Model):
+
+    def __init__(self):
+        super(NBCC_RGN, self).__init__()
+
+        # alphabetInit {'range':3.14159,'dist':'uniform'}
+        self.alphabets = tf.random.uniform(shape=[alphabet_size, NUM_DIHEDRALS], minval=-3.14159, maxval=3.14159)
+
+        # Bi-directional LSTM
+        self.lstm1 = layers.Bidirectional(layers.LSTM(800, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm1')
+        self.lstm2 = layers.Bidirectional(layers.LSTM(800, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm2')
+
+        # dihedrals
+        self.dense1 = layers.Dense(60, name='flatten')
+        self.softmax = layers.Softmax(name='softmax')
+
+    def call(self, inputs):
+        # inputs : (N, batch_size, 62)
+        num_steps = inputs.shape[0]
+
+        x = self.lstm1(inputs)      # (N, batch_size, 1600)
+        x = self.lstm2(x)           # (N, batch_size, 1600)
+
+        # -------------------------------------------------
+        # dihedrals
+        x = self.dense1(x)          # (N, batch_size, 60)
+        flat_x = tf.reshape(x, [-1, 60])    # (N x batch_size, 60)
+        x = self.softmax(flat_x)            # (N x batch_size, 60)
+
+        flat_dihedrals = reduce_mean_angle(x, self.alphabets)  # (N x batch_size, 60) * (60, 3) = (N x batch_size, 3)
+        dihedrals = tf.reshape(flat_dihedrals, [num_steps, batch_size, NUM_DIHEDRALS])  # (N, batch_size, 3)
+
+        # -------------------------------------------------
+        # coordinates
+        points = dihedral_to_point(dihedrals)       # (N x 3, batch_size, 3)
+        coordinates = point_to_coordinate(points)   # (N x 3, batch_size, 3)
+
+        return coordinates
+
+# -------------------------------
+model = NBCC_RGN()
+
+total_epochs = 1
+
+optimizer = optimizers.Adam(learning_rate=0.0001, beta_1=0.95, beta_2=0.99)
+train_metric = metrics.MeanSquaredError()
+
+current_step = 0
+current_epoch = 0
+for epoch in range(total_epochs):
+    # training
+    for inputs, tertiaries, masks, ids in train_data:
+        print('inputs   ', x.shape)
+
+        # --------------------------------------------
+        # tertiary masks
+        _masks = []
+        for i in range(masks.shape[0]):
+            item_mask = tf.squeeze(tf.transpose(masks[i]), axis=0)
+            mat_mask = masking_matrix(item_mask)
+            _masks.append(mat_mask)
+
+        ter_masks = tf.convert_to_tensor(_masks)
+        ter_masks = tf.transpose(ter_masks, perm=(1, 2, 0), name='masks')
+        weights, _ = _weights(ter_masks)
+
+        # --------------------------------------------
+        with tf.GradientTape() as tape:
+            pred_coord = model(inputs)
+
+            # -------------------------------------------------
+            # MSE LOSS
+            loss_value = losses.MSE(tertiaries, pred_coord)
+
+            # -------------------------------------------------
+            # dRMSD LOSS
+            drmsds = _drmsds(pred_coord, tertiaries, weights)
+            print('drmsds', drmsds)
+
+            # _reduce_loss_quotient()
+            # _accumulate_loss()
+
+
+
+
+        grads = tape.gradient(loss_value, model.trainable_weights)
+        optimizer.apply_gradients(zip(grads, model.trainable_weights))
+
+        train_metric.update_state(tertiaries, pred)
+        train_mse = train_metric.result()
+
+        current_step += 1
+        print(current_step, float(train_mse), '\n')
+        if current_step == 3: break
+
+
+    # validation
+    # for x, y in valid_data:
+
+
+# ==========================================================================
