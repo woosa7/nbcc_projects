@@ -15,15 +15,17 @@ NUM_DIMENSIONS = 3
 
 batch_size = 32
 
-max_length = 700
+max_seq_length = 700
 alphabet_size = 60
 num_edge_residues = 0
 
 include_loss = True
 loss_atoms = 'c_alpha'
-tertiary_weight = 1.0
+tertiary_weight = tf.Variable(1.0)
 tertiary_normalization = 'first'
 batch_dependent_normalization = True
+
+num_evaluation_invocations = 1 # simple loss
 
 tf.random.set_seed(100)
 
@@ -98,7 +100,7 @@ def _weights(masks):
     # loss_atoms = 'c_alpha' & config['mode'] = None:
     # no loss-based curriculum, create fixed weighting matrix that weighs all distances equally.
     # minus one factor is there because we ignore self-distances.
-    flat_curriculum_weights = np.ones(max_length - num_edge_residues - 1, dtype='float32')
+    flat_curriculum_weights = np.ones(max_seq_length - num_edge_residues - 1, dtype='float32')
 
     # weighting matrix for entire batch that accounts for curriculum weighting.
     unnormalized_weights = weighting_matrix(flat_curriculum_weights, name='unnormalized_weights')
@@ -159,44 +161,49 @@ def effective_steps(masks, num_edge_residues, name=None):
                                                                                        # it here, even when it's not equal to 0.
         return eff_stepss
 
-def _reduce_loss_quotient(config, losses, masks, group_filter, name_prefix=''):
+@tf.function(experimental_relax_shapes=True)
+def tertiary_loss(losses, masks):
     """ Reduces loss according to normalization order.
-        losses = drmsds
+        num_evaluation_invocations = 1 (simple loss)
+        this = _reduce_loss_quotient() + _accumulate_loss()
     """
     # NBCC modified for tf 2.0
-    normalization = config['tertiary_normalization']   # firs
-    batch_dependent_normalization = config['batch_dependent_normalization']   # True
-    max_seq_length = config['max_seq_length']
+    filters = {'all': tf.tile([True], [batch_size,])}  # training mode
+    group_filter = filters['all']
 
     losses_filtered = tf.boolean_mask(losses, group_filter) # it will give problematic results if all entries are removed
 
-    if normalization == 'zeroth':
+    if tertiary_normalization == 'zeroth':
         loss_factors = tf.ones_like(losses_filtered)
-    elif normalization == 'first':
+    elif tertiary_normalization == 'first':
         loss_factors = tf.boolean_mask(effective_steps(masks, num_edge_residues), group_filter)
         fixed_denominator_factor = float(max_seq_length - num_edge_residues)
-    elif normalization == 'second':
+    elif tertiary_normalization == 'second':
         eff_num_stepss = tf.boolean_mask(effective_steps(masks, num_edge_residues), group_filter)
         loss_factors = (tf.square(eff_num_stepss) - eff_num_stepss) / 2.0
         fixed_denominator_factor = float(max_seq_length - num_edge_residues)
         fixed_denominator_factor = ((fixed_denominator_factor ** 2) - fixed_denominator_factor) / 2.0
 
-    numerator = tf.reduce_sum(loss_factors * losses_filtered, name=name_prefix + '_numerator')
+    numerator = tf.reduce_sum(loss_factors * losses_filtered)
 
-    if batch_dependent_normalization or normalization == 'zeroth':
-        denominator = tf.reduce_sum(loss_factors, name=name_prefix + '_denominator')
+    if batch_dependent_normalization or tertiary_normalization == 'zeroth':
+        denominator = tf.reduce_sum(loss_factors)
     else:
-        denominator = tf.multiply(tf.cast(tf.size(loss_factors), tf.float32), fixed_denominator_factor, name=name_prefix + '_denominator')
+        denominator = tf.multiply(tf.cast(tf.size(loss_factors), tf.float32), fixed_denominator_factor)
 
-    return numerator, denominator
+    # NBCC modified for tf 2.0
+    # _accumulate_loss() --> simple loss
+    tertiary_loss = tf.divide(numerator, denominator) * tertiary_weight
+
+    return tertiary_loss
 
 # ==========================================================================
 """
 Data Loader
 
 training dataset
-all       : 42528 % 32 = 1329
-less 700  : 41789 % 32 = 1305
+all       : 42528 / 32 = 1329
+less 700  : 41789 / 32 = 1305
 """
 
 def mapping_func(serialized_examples):
@@ -219,7 +226,7 @@ def filter_func(features, ids):
     primary = features['primary']
 
     pri_length = tf.size(primary)
-    keep = pri_length <= max_length
+    keep = pri_length <= max_seq_length
 
     return keep
 
@@ -233,7 +240,6 @@ def get_data(features):
 
     # convert to one_hot_encoding
     primary = tf.squeeze(primary, axis=2)
-    pri_length = primary.shape[0]
     one_hot_primary = tf.one_hot(primary, 20)
 
     # padding
@@ -310,22 +316,28 @@ class NBCC_RGN(models.Model):
 
         return coordinates
 
-# -------------------------------
+
+# -------------------------------------------------
 model = NBCC_RGN()
-
-total_epochs = 1
-
 optimizer = optimizers.Adam(learning_rate=0.0001, beta_1=0.95, beta_2=0.99)
-train_metric = metrics.MeanSquaredError()
 
-current_step = 0
+# model.fit() --> Please provide data which shares the same first dimension.
+
+total_epochs = 10
 current_epoch = 0
-for epoch in range(total_epochs):
-    # training
-    for inputs, tertiaries, masks, ids in train_data:
-        print('inputs', inputs.shape)
 
-        # --------------------------------------------
+
+
+for epoch in range(total_epochs):
+    # -------------------------------------------------
+    # training
+    current_step = 0
+    _accumulate_loss = []
+
+    for inputs, tertiaries, masks, ids in train_data:
+        # print('inputs', inputs.shape)
+        current_step += 1
+
         # tertiary masks
         _masks = []
         for i in range(masks.shape[0]):
@@ -337,47 +349,36 @@ for epoch in range(total_epochs):
         ter_masks = tf.transpose(ter_masks, perm=(1, 2, 0), name='masks')
         weights, _ = _weights(ter_masks)
 
-        # --------------------------------------------
-        # for dRMSD LOSS
-        filters = {'all': tf.tile([True], [batch_size,])}  # training mode
-        group_filter = filters['all']
-        config_loss = {'tertiary_normalization': 'first',
-                       'batch_dependent_normalization': True,
-                       'max_seq_length': max_length}
-
-        # --------------------------------------------
         with tf.GradientTape() as tape:
             pred_coord = model(inputs)
 
-            # -------------------------------------------------
-            # MSE LOSS
-            loss_value = losses.MSE(tertiaries, pred_coord)
-
-            # -------------------------------------------------
-            # dRMSD LOSS
+            # dRMSD Loss
             drmsds = _drmsds(pred_coord, tertiaries, weights)
-            # print('drmsds', drmsds)
 
-            tertiary_loss_numerator, tertiary_loss_denominator = _reduce_loss_quotient(config_loss, drmsds, ter_masks, group_filter)
-            print(tertiary_loss_numerator)
-            print(tertiary_loss_denominator)
+            loss_value = tertiary_loss(drmsds, ter_masks)
+            loss_value = tf.identity(loss_value)
 
-            # _accumulate_loss()
-
+            _accumulate_loss.append(float(loss_value))
 
         grads = tape.gradient(loss_value, model.trainable_weights)
         optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-        train_metric.update_state(tertiaries, pred_coord)
-        train_mse = train_metric.result()
+        # if current_step%100 == 0:
+        #     print('{:03d} step : {}'.format(current_step, np.mean(_accumulate_loss)))
 
-        current_step += 1
-        print(current_step, float(train_mse), '\n')
-        if current_step == 3: break
+        if current_step == 1: break
 
 
+    current_epoch += 1
+    print('train {:03d} epoch : {} : {}'.format(current_epoch, len(_accumulate_loss), np.mean(_accumulate_loss)))
+
+
+    # -------------------------------------------------
     # validation
     # for x, y in valid_data:
+
+    # -------------------------------------------------
+    # save checkpoint
 
 
 # ==========================================================================
