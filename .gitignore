@@ -141,3 +141,4 @@ dmypy.json
 /ML/fabric_image_detection/data/
 /ML/fabric_image_detection/results/
 /ML/fabric_image_detection/tfrecords/
+/DL/data/
