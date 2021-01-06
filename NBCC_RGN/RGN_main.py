@@ -4,28 +4,27 @@ import collections
 import tensorflow as tf
 from tensorflow.keras import layers, models, losses, optimizers, metrics
 from geom_ops import reduce_mean_angle, dihedral_to_point, point_to_coordinate, drmsd
+import time
 
 """
-python 3.7
-tensorflow 2.3
+python 3.7 (anaconda3-2020.02)
+tensorflow 2.2
 """
 
 NUM_DIHEDRALS = 3
 NUM_DIMENSIONS = 3
 
 batch_size = 32
-
 max_seq_length = 700
 alphabet_size = 60
 num_edge_residues = 0
 
-include_loss = True
 loss_atoms = 'c_alpha'
-tertiary_weight = tf.Variable(1.0)
+tertiary_weight = 1.0
 tertiary_normalization = 'first'
 batch_dependent_normalization = True
-
-num_evaluation_invocations = 1 # simple loss
+num_evaluation_invocations = 1  # simple loss
+LOSS_SCALING_FACTOR = 0.01      # this is to convert recorded losses to angstroms
 
 tf.random.set_seed(100)
 
@@ -82,10 +81,7 @@ def weighting_matrix(weights, name=None):
         flat_weights = tf.concat(flat_weights, 0)
 
         # NBCC modified for tf 2.0
-        # tf 1.0 : sparse_indices, output_shape, sparse_values
         # mat = tf.sparse_to_dense(flat_indices, [max_seq_length, max_seq_length], flat_weights, validate_indices=False, name=scope)
-
-        # indices, values, dense_shape
         mat_st = tf.sparse.SparseTensor(flat_indices, flat_weights, [max_seq_length, max_seq_length])
         mat = tf.sparse.to_dense(mat_st, validate_indices=False)
 
@@ -164,38 +160,69 @@ def effective_steps(masks, num_edge_residues, name=None):
 @tf.function(experimental_relax_shapes=True)
 def tertiary_loss(losses, masks):
     """ Reduces loss according to normalization order.
-        num_evaluation_invocations = 1 (simple loss)
-        this = _reduce_loss_quotient() + _accumulate_loss()
+        this = _reduce_loss_quotient() + _accumulate_loss() in original RGN
+
+        * training mode
+        num_evaluation_invocations = 1
+        filter - all
+
+        * evaluation mode
+        num_evaluation_invocations = 7
+        filter - all, 10, 20, 30, 40, 50, 70, 90
     """
+
     # NBCC modified for tf 2.0
     filters = {'all': tf.tile([True], [batch_size,])}  # training mode
     group_filter = filters['all']
 
     losses_filtered = tf.boolean_mask(losses, group_filter) # it will give problematic results if all entries are removed
 
-    if tertiary_normalization == 'zeroth':
-        loss_factors = tf.ones_like(losses_filtered)
-    elif tertiary_normalization == 'first':
-        loss_factors = tf.boolean_mask(effective_steps(masks, num_edge_residues), group_filter)
-        fixed_denominator_factor = float(max_seq_length - num_edge_residues)
-    elif tertiary_normalization == 'second':
-        eff_num_stepss = tf.boolean_mask(effective_steps(masks, num_edge_residues), group_filter)
-        loss_factors = (tf.square(eff_num_stepss) - eff_num_stepss) / 2.0
-        fixed_denominator_factor = float(max_seq_length - num_edge_residues)
-        fixed_denominator_factor = ((fixed_denominator_factor ** 2) - fixed_denominator_factor) / 2.0
-
+    # tertiary_normalization == 'first':
+    loss_factors = tf.boolean_mask(effective_steps(masks, num_edge_residues), group_filter)
     numerator = tf.reduce_sum(loss_factors * losses_filtered)
 
-    if batch_dependent_normalization or tertiary_normalization == 'zeroth':
-        denominator = tf.reduce_sum(loss_factors)
-    else:
-        denominator = tf.multiply(tf.cast(tf.size(loss_factors), tf.float32), fixed_denominator_factor)
+    # *** original code
+    # if tertiary_normalization == 'zeroth':
+    #     loss_factors = tf.ones_like(losses_filtered)
+    # elif tertiary_normalization == 'first':
+    #     loss_factors = tf.boolean_mask(effective_steps(masks, num_edge_residues), group_filter)
+    #     fixed_denominator_factor = float(max_seq_length - num_edge_residues)
+    # elif tertiary_normalization == 'second':
+    #     eff_num_stepss = tf.boolean_mask(effective_steps(masks, num_edge_residues), group_filter)
+    #     loss_factors = (tf.square(eff_num_stepss) - eff_num_stepss) / 2.0
+    #     fixed_denominator_factor = float(max_seq_length - num_edge_residues)
+    #     fixed_denominator_factor = ((fixed_denominator_factor ** 2) - fixed_denominator_factor) / 2.0
+
+    # batch_dependent_normalization = True
+    denominator = tf.reduce_sum(loss_factors)
+
+    # *** original code
+    # if batch_dependent_normalization or tertiary_normalization == 'zeroth':
+    #     denominator = tf.reduce_sum(loss_factors)
+    # else:
+    #     denominator = tf.multiply(tf.cast(tf.size(loss_factors), tf.float32), fixed_denominator_factor)
 
     # NBCC modified for tf 2.0
     # _accumulate_loss() --> simple loss
-    tertiary_loss = tf.divide(numerator, denominator) * tertiary_weight
+    tertiary_loss = tf.math.divide(numerator, denominator) * tertiary_weight * LOSS_SCALING_FACTOR
 
     return tertiary_loss
+
+def mask_and_weight(masks):
+    # tertiary masks
+    _masks = []
+    for i in range(masks.shape[0]):
+        item_mask = tf.squeeze(tf.transpose(masks[i]), axis=0)
+        mat_mask = masking_matrix(item_mask)
+        _masks.append(mat_mask)
+
+    ter_masks = tf.convert_to_tensor(_masks)
+    ter_masks = tf.transpose(ter_masks, perm=(1, 2, 0), name='masks')
+
+    # weights
+    weights, _ = _weights(ter_masks)
+
+    return ter_masks, weights
 
 # ==========================================================================
 """
@@ -204,6 +231,9 @@ Data Loader
 training dataset
 all       : 42528 / 32 = 1329
 less 700  : 41789 / 32 = 1305
+
+validation dataset
+less 700  : 224 / 32 = 7
 """
 
 def mapping_func(serialized_examples):
@@ -262,19 +292,13 @@ def get_data(features):
 """
 Data Generator
 """
-phase = 'training'
-file_list = glob.glob('./RGN11/data/ProteinNet11/{}/*'.format(phase))
+train_files = glob.glob('./RGN11/data/ProteinNet11/training/*')
+validation_files = glob.glob('./RGN11/data/ProteinNet11/validation/*')
+test_files = glob.glob('./RGN11/data/ProteinNet11/testing/*')
 
-train_dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(file_list, shuffle=True)).map(mapping_func).filter(filter_func).batch(batch_size, drop_remainder=True).prefetch(1)
-
-def generator():
-    for element in train_dataset:
-        features = element[0]
-        ids = element[1]
-        inputs, tertiaries, ter_masks = get_data(features)
-        yield inputs, tertiaries, ter_masks, ids
-
-train_data = tf.data.Dataset.from_generator(generator, output_types=(tf.float32, tf.float32, tf.float32, tf.string))
+train_dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(train_files, shuffle=True)).map(mapping_func).filter(filter_func).batch(batch_size, drop_remainder=True).prefetch(1)
+valid_dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(validation_files)).map(mapping_func).filter(filter_func).batch(batch_size, drop_remainder=True).prefetch(1)
+test_dataset  = tf.data.TFRecordDataset(tf.data.Dataset.list_files(test_files)).map(mapping_func).filter(filter_func).batch(batch_size, drop_remainder=True).prefetch(1)
 
 # ==========================================================================
 class NBCC_RGN(models.Model):
@@ -282,8 +306,9 @@ class NBCC_RGN(models.Model):
     def __init__(self):
         super(NBCC_RGN, self).__init__()
 
-        # alphabetInit {'range':3.14159,'dist':'uniform'}
-        self.alphabets = tf.random.uniform(shape=[alphabet_size, NUM_DIHEDRALS], minval=-3.14159, maxval=3.14159)
+        # alphabet
+        alphabet_initializer = tf.random_uniform_initializer(minval=-3.14159, maxval=3.14159)
+        self.alphabets = self.add_weight(shape=(alphabet_size, NUM_DIHEDRALS), initializer=alphabet_initializer, trainable=True, name='alphabets')
 
         # Bi-directional LSTM
         self.lstm1 = layers.Bidirectional(layers.LSTM(800, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm1')
@@ -302,7 +327,7 @@ class NBCC_RGN(models.Model):
 
         # -------------------------------------------------
         # dihedrals
-        x = self.dense1(x)          # (N, batch_size, 60)
+        x = self.dense1(x)                  # (N, batch_size, 60)
         flat_x = tf.reshape(x, [-1, 60])    # (N x batch_size, 60)
         x = self.softmax(flat_x)            # (N x batch_size, 60)
 
@@ -318,67 +343,91 @@ class NBCC_RGN(models.Model):
 
 
 # -------------------------------------------------
+log_train = 'loss_train'
+log_valid = 'loss_validation'
+
 model = NBCC_RGN()
 optimizer = optimizers.Adam(learning_rate=0.0001, beta_1=0.95, beta_2=0.99)
 
-# model.fit() --> Please provide data which shares the same first dimension.
-
-total_epochs = 10
+total_epochs = 200
 current_epoch = 0
-
-
 
 for epoch in range(total_epochs):
     # -------------------------------------------------
     # training
     current_step = 0
-    _accumulate_loss = []
+    _accumulated_loss = []
 
-    for inputs, tertiaries, masks, ids in train_data:
-        # print('inputs', inputs.shape)
-        current_step += 1
+    start_time = time.time()
 
-        # tertiary masks
-        _masks = []
-        for i in range(masks.shape[0]):
-            item_mask = tf.squeeze(tf.transpose(masks[i]), axis=0)
-            mat_mask = masking_matrix(item_mask)
-            _masks.append(mat_mask)
+    for element in train_dataset:
+        features = element[0]
+        ids = element[1]
+        inputs, tertiaries, masks = get_data(features)
+        ter_masks, weights = mask_and_weight(masks)
 
-        ter_masks = tf.convert_to_tensor(_masks)
-        ter_masks = tf.transpose(ter_masks, perm=(1, 2, 0), name='masks')
-        weights, _ = _weights(ter_masks)
-
+        # compute gradient and optimization
         with tf.GradientTape() as tape:
             pred_coord = model(inputs)
 
             # dRMSD Loss
-            drmsds = _drmsds(pred_coord, tertiaries, weights)
+            drmsds = _drmsds(pred_coord, tertiaries, weights)   # (batch_size,)
+            loss = tertiary_loss(drmsds, ter_masks)       # (1,)
+            loss = tf.identity(loss)
 
-            loss_value = tertiary_loss(drmsds, ter_masks)
-            loss_value = tf.identity(loss_value)
+            _accumulated_loss.append(float(loss))
 
-            _accumulate_loss.append(float(loss_value))
-
-        grads = tape.gradient(loss_value, model.trainable_weights)
+        grads = tape.gradient(loss, model.trainable_weights)
         optimizer.apply_gradients(zip(grads, model.trainable_weights))
+        # print(model.trainable_weights[-1][:5])  # alphabets
 
-        # if current_step%100 == 0:
-        #     print('{:03d} step : {}'.format(current_step, np.mean(_accumulate_loss)))
-
-        if current_step == 1: break
+        current_step += 1
+        if current_step == 10: break
 
 
     current_epoch += 1
-    print('train {:03d} epoch : {} : {}'.format(current_epoch, len(_accumulate_loss), np.mean(_accumulate_loss)))
+    end_time = time.time()
+
+    # epoch, train_loss, run_time (min)
+    log_str = '{:03d}\t{:10.2f}\t{:10.2f}\t{:7.2f}'.format(current_epoch, np.mean(_accumulated_loss), np.min(_accumulated_loss), (end_time-start_time)/60)
+    print(log_str)
+    with open(log_train, "a") as f:
+        print(log_str, file=f)
 
 
     # -------------------------------------------------
     # validation
-    # for x, y in valid_data:
+    _accumulated_valid_loss = []
+    for element in valid_dataset:
+        features = element[0]
+        ids = element[1]
+        inputs, tertiaries, masks = get_data(features)
+        ter_masks, weights = mask_and_weight(masks)
+
+        # prediction
+        pred_coord = model(inputs)
+
+        # dRMSD Loss
+        drmsds = _drmsds(pred_coord, tertiaries, weights)
+        valid_loss = tertiary_loss(drmsds, ter_masks)
+
+        _accumulated_valid_loss.append(float(valid_loss))
+
+    # epoch, valid_loss
+    log_str = '{:03d}\t{:10.2f}\t{:10.2f}'.format(current_epoch, np.mean(_accumulated_valid_loss), np.min(_accumulated_loss))
+    print(log_str)
+    with open(log_valid, "a") as f:
+        print(log_str, file=f)
+
 
     # -------------------------------------------------
     # save checkpoint
 
 
+
+
+# ==========================================================================
+# model.fit()
+# Please provide data which shares the same first dimension.
+# --> transpose
 # ==========================================================================
