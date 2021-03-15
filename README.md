@@ -1,7 +1,7 @@
-# nbcc_on_campus
-* Anaconda3-2020.02
-* python 3.7
-* tensorflow 2.2
+# nbcc_projects
+
+## analyze_protein_trajectory
+protein (HP36) simulation trajectory에 대한 다양한 분석 코드 (python 3.7)
 
 
 ## ML
