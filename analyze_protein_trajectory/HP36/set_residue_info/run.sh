@@ -1,4 +1,4 @@
-cp ../../set_pql_param/protein.pql .
+cp ../set_pql_param/protein.pql .
 
 python run_set_residue_info.py
 
