@@ -1,0 +1,22 @@
+# set topology file
+
+parm ../tleap/HP36.top
+
+# read trajectory files
+
+trajin ../tleap/HP36_initial.crd
+
+# stripping
+
+strip :WAT
+strip :Na+
+strip :Cl-
+
+# centering
+
+center :1-36 mass origin
+image origin center familiar
+
+# PDB
+
+trajout HP36_initial.pdb pdb

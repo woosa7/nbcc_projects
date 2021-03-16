@@ -1,0 +1,3 @@
+
+cpptraj -i pdb.in
+
