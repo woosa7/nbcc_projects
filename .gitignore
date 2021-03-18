@@ -144,3 +144,5 @@ dmypy.json
 /DL/data/
 /DL/dataset/
 /DL/logs/
+/.idea/nbcc_projects.iml
+/.idea/workspace.xml
