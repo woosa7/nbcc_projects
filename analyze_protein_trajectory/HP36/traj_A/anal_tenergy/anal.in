@@ -1,0 +1,31 @@
+
+# set topology file
+
+parm ../top/HP36.top [protein_top]
+
+# from 0 ns to 10 ns (saved every 5 ps)
+
+trajin ../crd/HP36_300K_A_md0001.crd 1 100 parm [protein_top]
+trajin ../crd/HP36_300K_A_md0002.crd 1 100 parm [protein_top]
+trajin ../crd/HP36_300K_A_md0003.crd 1 100 parm [protein_top]
+trajin ../crd/HP36_300K_A_md0004.crd 1 100 parm [protein_top]
+trajin ../crd/HP36_300K_A_md0005.crd 1 100 parm [protein_top]
+trajin ../crd/HP36_300K_A_md0006.crd 1 100 parm [protein_top]
+trajin ../crd/HP36_300K_A_md0007.crd 1 100 parm [protein_top]
+trajin ../crd/HP36_300K_A_md0008.crd 1 100 parm [protein_top]
+trajin ../crd/HP36_300K_A_md0009.crd 1 100 parm [protein_top]
+trajin ../crd/HP36_300K_A_md0010.crd 1 100 parm [protein_top]
+
+# centering
+
+strip :WAT
+strip :Na+
+strip :Cl-
+
+center :1-36 mass origin
+image origin center familiar
+
+# total energy
+
+totalenergy :1-36 out tenergy.dat
+

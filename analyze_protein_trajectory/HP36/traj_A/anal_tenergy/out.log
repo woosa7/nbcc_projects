@@ -1,0 +1,142 @@
+
+CPPTRAJ: Trajectory Analysis. V15.00
+    ___  ___  ___  ___
+     | \/ | \/ | \/ | 
+    _|_/\_|_/\_|_/\_|_
+
+| Date/time: 09/17/20  22:50:47
+| Available memory: 559.68 MB
+
+INPUT: Reading Input from file anal.in
+  [parm ../top/HP36.top [protein_top]]
+	Reading '../top/HP36.top' as Amber Topology
+  [trajin ../crd/HP36_300K_A_md0001.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0001.crd' as Amber NetCDF
+  [trajin ../crd/HP36_300K_A_md0002.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0002.crd' as Amber NetCDF
+  [trajin ../crd/HP36_300K_A_md0003.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0003.crd' as Amber NetCDF
+  [trajin ../crd/HP36_300K_A_md0004.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0004.crd' as Amber NetCDF
+  [trajin ../crd/HP36_300K_A_md0005.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0005.crd' as Amber NetCDF
+  [trajin ../crd/HP36_300K_A_md0006.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0006.crd' as Amber NetCDF
+  [trajin ../crd/HP36_300K_A_md0007.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0007.crd' as Amber NetCDF
+  [trajin ../crd/HP36_300K_A_md0008.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0008.crd' as Amber NetCDF
+  [trajin ../crd/HP36_300K_A_md0009.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0009.crd' as Amber NetCDF
+  [trajin ../crd/HP36_300K_A_md0010.crd 1 100 parm [protein_top]]
+	Reading '../crd/HP36_300K_A_md0010.crd' as Amber NetCDF
+  [strip :WAT]
+    STRIP: Stripping atoms in mask [:WAT]
+  [strip :Na+]
+    STRIP: Stripping atoms in mask [:Na+]
+  [strip :Cl-]
+    STRIP: Stripping atoms in mask [:Cl-]
+  [center :1-36 mass origin]
+    CENTER: Centering coordinates using center of mass of atoms in mask (:1-36) to
+	coordinate origin.
+  [image origin center familiar]
+    IMAGE: By molecule to origin based on center of mass using atoms in mask *
+           Triclinic On, familiar shape.
+  [totalenergy :1-36 out tenergy.dat]
+    TOTALENERGY: Atoms in mask [:1-36]
+---------- RUN BEGIN -------------------------------------------------
+
+PARAMETER FILES:
+ 0: [protein_top] 'HP36.top', 15283 atoms, 4933 res, box: Orthogonal, 4898 mol, 4895 solvent, 1000 frames
+
+INPUT TRAJECTORIES:
+ 0: 'HP36_300K_A_md0001.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+ 1: 'HP36_300K_A_md0002.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+ 2: 'HP36_300K_A_md0003.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+ 3: 'HP36_300K_A_md0004.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+ 4: 'HP36_300K_A_md0005.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+ 5: 'HP36_300K_A_md0006.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+ 6: 'HP36_300K_A_md0007.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+ 7: 'HP36_300K_A_md0008.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+ 8: 'HP36_300K_A_md0009.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+ 9: 'HP36_300K_A_md0010.crd' is a NetCDF AMBER trajectory, Parm [protein_top] (Orthogonal box) (reading 100 of 100)
+  Coordinate processing will occur on 1000 frames.
+TIME: Run Initialization took 0.0000 seconds.
+
+BEGIN TRAJECTORY PROCESSING:
+.....................................................
+ACTION SETUP FOR PARM '[protein_top]' (6 actions):
+  0: [strip :WAT]
+	Stripping 14685 atoms.
+	Stripped parm: 'HP36.top', 598 atoms, 38 res, box: Orthogonal, 3 mol
+  1: [strip :Na+]
+	Stripping 0 atoms.
+Warning: No atoms to strip. Skipping 'strip' for topology 'HP36.top'
+Warning: Setup failed for [strip :Na+]: Skipping
+  2: [strip :Cl-]
+	Stripping 2 atoms.
+	Stripped parm: 'HP36.top', 596 atoms, 36 res, box: Orthogonal, 1 mol
+  3: [center :1-36 mass origin]
+	Mask [:1-36] corresponds to 596 atoms.
+  4: [image origin center familiar]
+	Number of molecules to be imaged is 1 based on mask '*'
+  5: [totalenergy :1-36 out tenergy.dat]
+	Total-energy calculation with amber topology.
+	Mask [:1-36] corresponds to 596 atoms.
+----- HP36_300K_A_md0001.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+----- HP36_300K_A_md0002.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+----- HP36_300K_A_md0003.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+----- HP36_300K_A_md0004.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+----- HP36_300K_A_md0005.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+----- HP36_300K_A_md0006.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+----- HP36_300K_A_md0007.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+----- HP36_300K_A_md0008.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+----- HP36_300K_A_md0009.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+----- HP36_300K_A_md0010.crd (1-100, 1) -----
+ 0% 10% 20% 30% 40% 51% 61% 71% 81% 91% 100% Complete.
+
+Read 1000 frames and processed 1000 frames.
+TIME: Trajectory processing: 3.9362 s
+TIME: Avg. throughput= 254.0494 frames / second.
+
+ACTION OUTPUT:
+
+DATASETS:
+  8 data sets:
+	ETOTAL_00000 "ETOTAL_00000" (double), size is 1000
+	EBOND_00001 "EBOND_00001" (double), size is 1000
+	EANGLE_00002 "EANGLE_00002" (double), size is 1000
+	EDIHEDRAL_00003 "EDIHEDRAL_00003" (double), size is 1000
+	E14LJ_00004 "E14LJ_00004" (double), size is 1000
+	E14ELEC_00005 "E14ELEC_00005" (double), size is 1000
+	ELJ_00006 "ELJ_00006" (double), size is 1000
+	EELEC_00007 "EELEC_00007" (double), size is 1000
+
+DATAFILES:
+  tenergy.dat (Standard Data File):  ETOTAL_00000 EBOND_00001 EANGLE_00002 EDIHEDRAL_00003 E14LJ_00004 E14ELEC_00005 ELJ_00006 EELEC_00007
+---------- RUN END ---------------------------------------------------
+TIME: Total execution time: 4.0216 seconds.
+--------------------------------------------------------------------------------
+To cite CPPTRAJ use:
+Daniel R. Roe and Thomas E. Cheatham, III, "PTRAJ and CPPTRAJ: Software for
+  Processing and Analysis of Molecular Dynamics Trajectory Data". J. Chem.
+  Theory Comput., 2013, 9 (7), pp 3084-3095.
+
