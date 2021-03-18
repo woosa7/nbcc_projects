@@ -80,9 +80,6 @@ ipair_residues = np.zeros((n_res+1, n_res+1), dtype=int)
 for ires in range(1, n_res+1):
     ires_atoms = [x for x in pdb if x[4] == ires]
 
-    list_atom = [x[2].decode() for x in ires_atoms]
-    list_res  = [x[3].decode() for x in ires_atoms]
-
     # only for heavy atoms
     # decode() : byte to string
     ires_atoms = [x for x in ires_atoms if x[2].decode()[0] != 'H']

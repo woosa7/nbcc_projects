@@ -7,6 +7,9 @@ HP36 (pdb code : 1VII)
 * set residue info
 * set atom info
 * find native conatcts
+* count hydrophobic contacts
+
+* calc total energy, renergy (decomposed t-energy)
 
 <br>
 
