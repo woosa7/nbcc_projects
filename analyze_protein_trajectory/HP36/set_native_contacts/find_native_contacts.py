@@ -37,9 +37,16 @@ pdb = np.loadtxt('native_structure.pdb',
                         ('f',float),('g',float),('h',float),
                         ('i',float),('j',float),('k','S4')])
 
-# print(pdb[:5])
-# print(pdb[-5:])
-print()
+"""
+(b'ATOM', 1,  b'N',  b'MET', 1, 4.27, -7.378, -7.921, 1., 0., b'N')
+(b'ATOM', 5,  b'CA', b'MET', 1, 2.964, -6.831, -7.451, 1., 0., b'C')
+(b'ATOM', 7,  b'CB', b'MET', 1, 1.886, -7.084, -8.51, 1., 0., b'C')
+(b'ATOM', 10, b'CG', b'MET', 1, 1.749, -5.845, -9.4, 1., 0., b'C')
+(b'ATOM', 13, b'SD', b'MET', 1, 1.8, -6.34, -11.146, 1., 0., b'S')
+(b'ATOM', 14, b'CE', b'MET', 1, 0.294, -5.485, -11.673, 1., 0., b'C')
+(b'ATOM', 18, b'C',  b'MET', 1, 2.579, -7.502, -6.132, 1., 0., b'C')
+(b'ATOM', 19, b'O',  b'MET', 1, 2.66, -8.707, -5.986, 1., 0., b'O')
+"""
 
 # functions
 def find_atom_res_name(atom_no):
@@ -127,7 +134,7 @@ for i in range(1, n_atom):
                                                 i, iatom, ires, irname,
                                                 j, jatom, jres, jrname, dist_atoms[i,j]),
                                                 file=f_atom)
-f_atom.close
+f_atom.close()
 
 f_res = open('native_contacts_residues.dat', 'w')
 print('{:>12d}'.format(ncontact_residues), file=f_res)
@@ -138,7 +145,7 @@ for ires in range(1, n_res+1):
             jrname = find_res_name(jres)
             print('{:>3d} {} : {:>3d} {}'.format(ires, irname, jres, jrname), file=f_res)
 
-f_res.close
+f_res.close()
 
 
 # =============================================================================
