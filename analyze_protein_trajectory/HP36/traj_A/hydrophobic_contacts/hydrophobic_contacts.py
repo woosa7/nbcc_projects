@@ -23,8 +23,8 @@ print('total number of pdb files =', ndata)
 cutoff  = 5.4
 cutoff2 = cutoff * cutoff
 
-hydrophobic_res = ['ALA', 'VAL', 'LEU', 'ILE', 'MET', 'PHE', 'CYS']
-main_atoms = ['H', 'CA', 'C', 'O', 'N']
+hydrophobic_res = ['ALA','VAL','LEU','ILE','MET','PHE','CYS']
+main_atoms = ['H','CA','C','O','N']
 
 f_out = open('hydrophobic_contacts.dat', 'w')
 
@@ -70,7 +70,10 @@ for k, file in enumerate(list_pdb):
                 if res_name not in hydrophobic_res:
                     continue
 
-                pdb.append(line.replace('\n',''))
+                # atom_no, atom_name, res_name, res_no, x, y, z
+                atom = [int(line[6:11]), line[12:16], line[17:20], int(line[22:26]),
+                        float(line[30:38]), float(line[38:46]), float(line[46:54])]
+                pdb.append(atom)
 
     if k == 0:
         n_res = len(list(set(l_res)))
@@ -83,22 +86,22 @@ for k, file in enumerate(list_pdb):
     ipair_residues = np.zeros((n_res+1, n_res+1), dtype=int)
 
     for ires in range(1, n_res+1):
-        ires_atoms = [x for x in pdb if int(x[22:26]) == ires]
+        ires_atoms = [x for x in pdb if x[3] == ires]
 
         for jres in range(ires + 4, n_res+1): # avoid neighboring pair
-            jres_atoms = [x for x in pdb if int(x[22:26]) == jres]
+            jres_atoms = [x for x in pdb if x[3] == jres]
 
             for i_atom in ires_atoms:
-                inum = int(i_atom[6:11])
-                ix = float(i_atom[30:38])
-                iy = float(i_atom[38:46])
-                iz = float(i_atom[46:54])
+                inum = i_atom[0]
+                ix = i_atom[4]
+                iy = i_atom[5]
+                iz = i_atom[6]
 
                 for j_atom in jres_atoms:
-                    jnum = int(j_atom[6:11])
-                    jx = float(j_atom[30:38])
-                    jy = float(j_atom[38:46])
-                    jz = float(j_atom[46:54])
+                    jnum = j_atom[0]
+                    jx = j_atom[4]
+                    jy = j_atom[5]
+                    jz = j_atom[6]
 
                     xx = (ix-jx)**2
                     yy = (iy-jy)**2
