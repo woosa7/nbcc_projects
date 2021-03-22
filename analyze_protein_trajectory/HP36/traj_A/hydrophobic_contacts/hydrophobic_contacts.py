@@ -51,12 +51,17 @@ for k, file in enumerate(list_pdb):
         lines = f.readlines()
         for line in lines:
             if line.startswith('ATOM'):
-                atom_name = line[12:16].replace(' ', '')
-                res_name = line[17:20]
-                res = int(line[22:26])
+                # atom_no, atom_name, res_name, res_no, chain, x, y, z
+                atom = [int(line[6:11]), line[12:16],
+                        line[17:20], int(line[22:26]), line[21],
+                        float(line[30:38]), float(line[38:46]), float(line[46:54])]
+
+                atom_name = atom[1].replace(' ', '')
+                res_name = atom[2]
+                res_no = atom[3]
 
                 n_atom += 1
-                l_res.append(res) # for count the number of residue
+                l_res.append(res_no) # for count the number of residue
 
                 # only for heavy atoms
                 if atom_name[0] == 'H':
@@ -70,9 +75,6 @@ for k, file in enumerate(list_pdb):
                 if res_name not in hydrophobic_res:
                     continue
 
-                # atom_no, atom_name, res_name, res_no, x, y, z
-                atom = [int(line[6:11]), line[12:16], line[17:20], int(line[22:26]),
-                        float(line[30:38]), float(line[38:46]), float(line[46:54])]
                 pdb.append(atom)
 
     if k == 0:
@@ -93,15 +95,15 @@ for k, file in enumerate(list_pdb):
 
             for i_atom in ires_atoms:
                 inum = i_atom[0]
-                ix = i_atom[4]
-                iy = i_atom[5]
-                iz = i_atom[6]
+                ix = i_atom[5]
+                iy = i_atom[6]
+                iz = i_atom[7]
 
                 for j_atom in jres_atoms:
                     jnum = j_atom[0]
-                    jx = j_atom[4]
-                    jy = j_atom[5]
-                    jz = j_atom[6]
+                    jx = j_atom[5]
+                    jy = j_atom[6]
+                    jz = j_atom[7]
 
                     xx = (ix-jx)**2
                     yy = (iy-jy)**2
