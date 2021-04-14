@@ -1,0 +1,11 @@
+min2: minimization without restraints
+  &cntrl
+    imin = 1,
+    maxcyc = 2500,
+    ncyc = 1000,
+    ntb = 1,
+    cut = 10,
+    ntr = 0
+  /
+  &ewald
+  /

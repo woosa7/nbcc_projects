@@ -1,0 +1,13 @@
+min1: initial minimization with the restraints
+  &cntrl
+    imin = 1,
+    maxcyc = 1000,
+    ncyc = 500,
+    ntb = 1,
+    cut = 10,
+    ntr = 1
+    restraint_wt = 500.0,
+    restraintmask='!:WAT & !@H='
+  /
+  &ewald
+  /
