@@ -1,0 +1,29 @@
+
+# set topology file
+
+parm ../preparation/01_tleap/cv30com_rbd.top
+
+# crd file
+
+trajin ../preparation/01_tleap/cv30com_rbd_initial.crd
+
+#
+# notice the following structure info
+#
+#   monomer_1 (antibody)  :   1-439 (439 residues) comprising heavy (1-224, 224 residues) and light (225-439, 215 residues) chains
+#   monomer_2 (RBD)       : 440-648 (209 residues)
+#
+
+# centering (do not strip water for pqlout)
+
+center :1-224 mass origin
+image origin center familiar
+center :1-439 mass origin
+image origin center familiar
+center :1-648 mass origin
+image origin center familiar
+
+# pql file (put noframeout at the end when only parameter file is necessary)
+
+pqlout :1-648 out protein.pql noframeout
+
