@@ -1,19 +1,16 @@
 """
-model and utility functions of NBCC_RGN
+utility functions of NBCC_RGN
 """
 
 import numpy as np
 import tensorflow as tf
-from geom_ops import reduce_mean_angle, dihedral_to_point, point_to_coordinate, drmsd
-from tensorflow.keras import layers, models, losses, optimizers, metrics, losses
+from geom_ops import drmsd
 
+# ==========================================================================
 NUM_DIHEDRALS = 3
 NUM_DIMENSIONS = 3
 
-# batch_size = 32
 max_seq_length = 700
-alphabet_size = 60
-lstm_cells = 800
 
 num_edge_residues = 0
 loss_atoms = 'c_alpha'
@@ -22,7 +19,6 @@ tertiary_normalization = 'first'
 batch_dependent_normalization = True
 num_evaluation_invocations = 1  # simple loss
 LOSS_SCALING_FACTOR = 0.01      # this is to convert recorded losses to angstroms
-
 
 # ==========================================================================
 """
@@ -237,8 +233,8 @@ def mask_and_weight(masks):
 Data Loader
 * less 700 residues
 training dataset    : 41789 / 32 = 1305
-validation dataset  : 224 / 32 = 7
-test dataset        :  81 / 32 = 2
+validation dataset  :   224 / 32 =    7
+test dataset        :    81 / 32 =    2
 """
 
 def mapping_func(serialized_examples):
@@ -293,205 +289,5 @@ def get_data(features):
     inputs = tf.concat((one_hot_primary, evolutionary), axis=2)
 
     return inputs, tertiary, mask, primary
-
-# ==========================================================================
-"""
-NBCC RGN model
-"""
-def adam_optimizer():
-    optimizer = optimizers.Adam(learning_rate=0.0001, beta_1=0.95, beta_2=0.99, epsilon=1e-07)
-    return optimizer
-
-class CoordinateLayer(tf.keras.layers.Layer):
-    """
-    When saving the model, a RuntimeError is raised because num_steps is 'None'.
-    When initializing this layer, num_steps is initialized to max_seq_length,
-    then the num_steps value changed in call() for each batch.
-    So when saving the model, num_steps is recognized as 'Tensor' and saved normally.
-    """
-    def __init__(self, num_steps):
-        super(CoordinateLayer, self).__init__()
-        self.num_steps = num_steps
-
-    def call(self, flat_dihedrals, batch_size):
-        self.num_steps = tf.cast(tf.divide(tf.shape(flat_dihedrals)[0], batch_size), dtype=tf.int32)
-
-        # flat_dihedrals (N x batch_size, 3)
-        dihedrals = tf.reshape(flat_dihedrals, [self.num_steps, batch_size, NUM_DIHEDRALS]) # (N, batch_size, 3)
-        points = dihedral_to_point(dihedrals)       # (N x 3, batch_size, 3)
-        coordinates = point_to_coordinate(points)   # (N x 3, batch_size, 3)
-        return coordinates
-
-
-class NBCC_RGN(models.Model):
-
-    def __init__(self, batch_size):
-        super(NBCC_RGN, self).__init__()
-
-        self.batch_size = batch_size
-
-        # alphabet
-        alphabet_initializer = tf.random_uniform_initializer(minval=-3.14159, maxval=3.14159)
-        self.alphabets = self.add_weight(shape=(alphabet_size, NUM_DIHEDRALS), initializer=alphabet_initializer, trainable=True, name='alphabets')
-
-        # Bi-directional LSTM
-        self.lstm1 = layers.Bidirectional(layers.LSTM(lstm_cells, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm1')
-        self.lstm2 = layers.Bidirectional(layers.LSTM(lstm_cells, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm2')
-
-        # dihedrals
-        self.dense1 = layers.Dense(60, name='flatten')
-        self.softmax = layers.Softmax(name='softmax')
-
-        # dihedrals to coordinates
-        self.coordinate_layer = CoordinateLayer(max_seq_length) # initialize by max_seq_length
-
-    def call(self, inputs, training=True):
-        # inputs : (N, batch_size, 62)
-        # -------------------------------------------------
-        # RNN
-        x = self.lstm1(inputs, training=training)   # (N, batch_size, 1600)
-        x = self.lstm2(x, training=training)        # (N, batch_size, 1600)
-
-        # -------------------------------------------------
-        # dihedrals
-        x = self.dense1(x)                          # (N, batch_size, 60)
-        flat_x = tf.reshape(x, [-1, 60])            # (N x batch_size, 60)
-        x = self.softmax(flat_x)                    # (N x batch_size, 60)
-        flat_dihedrals = reduce_mean_angle(x, self.alphabets) # (N x batch_size, 60) * (60, 3) = (N x batch_size, 3)
-
-        # -------------------------------------------------
-        # dihedrals to coordinates
-        coordinates = self.coordinate_layer(flat_dihedrals, self.batch_size)
-
-
-        # inputs :          (659, 32, 62)   :   N
-        # flat_dihedrals :  (21088, 3)      :   N * 32
-        # coordinates :     (1977, 32, 3)   :   N * 3
-
-        return coordinates
-
-    def get_config(self):
-        config = super().get_config().copy()
-        config.update({
-            'coordinate_layer': self.coordinate_layer,
-        })
-        return config
-
-
-
-# ==========================================================================
-"""
-NBCC RGN model - Attention Networks
-"""
-
-class Encoder(tf.keras.Model):
-    def __init__(self):
-        super(Encoder, self).__init__()
-
-        self.lstm_forward  = layers.LSTM(lstm_cells, return_sequences=True, return_state=True, dropout=0.5)
-        self.lstm_backward = layers.LSTM(lstm_cells, return_sequences=True, return_state=True, dropout=0.5, go_backwards=True)
-
-    def call(self, x, training=True):
-        # output, hidden state, cell state
-        H1, h1, c1 = self.lstm_forward(x)
-        H2, h2, c2 = self.lstm_backward(x)
-
-        H = tf.concat([H1, H2], axis=2)     # (batch, N, 1600)
-        h = tf.concat([h1, h2], axis=1)     # (batch, 1600)
-        c = tf.concat([c1, c2], axis=1)     # (batch, 1600)
-
-        return H, h, c
-
-
-class Decoder(tf.keras.Model):
-    def __init__(self):
-        super(Decoder, self).__init__()
-
-        self.lstm = tf.keras.layers.LSTM(lstm_cells * 2, return_sequences=True, return_state=True, dropout=0.5)
-
-        # self.lstm_forward  = layers.LSTM(lstm_cells * 2, return_sequences=True, return_state=True, dropout=0.5)
-        # self.lstm_backward = layers.LSTM(lstm_cells * 2, return_sequences=True, return_state=True, dropout=0.5, go_backwards=True)
-
-        # Attention layer !!!
-        self.attention = tf.keras.layers.Attention()
-
-        self.dense1 = layers.Dense(60, name='flatten')
-        self.dense2 = layers.Dense(3)
-
-    def call(self, inputs, training=True):
-        # y  : ground truth                 (batch, N*3 , 3)
-        # s0 : hidden state of Encoder      (batch, 1600)
-        # c0 : cell state of Encoder        (batch, 1600)
-        # H  : output of Encoder            (batch, N, 1600)
-        y, s0, c0, H_value = inputs
-
-        S, h, c = self.lstm(y, initial_state=[s0, c0])  # S : all hidden states for y. (batch, N, 1600)
-
-        print('S :', S.shape)       # (32, N*3 , 3)
-        print('h :', s0.shape)      # (32, 1600)
-        print('c :', c0.shape)
-
-        S_key = tf.concat([s0[:, tf.newaxis, :], S[:, :-1, :]], axis=1) # --> Key of Attention
-        # print('S_key :', S_key.shape)
-        # H_value : output of Encoder --> Value of Attention
-
-        A = self.attention([S_key, H_value])    # key, value
-        # print('A :', A.shape)
-
-        y_ = tf.concat([S, A], axis=-1)
-        # print('y_ :', y_.shape)                     #  (32, N*3, 3200)
-
-        x = self.dense1(y_)                          # (32, N, 60)
-        # print('dense1 :', x.shape)
-
-        coordinates = self.dense2(x)                          # (N, batch_size, 3)
-        # print('dense2 :', coordinates.shape)
-
-
-        return coordinates
-
-
-class NBCC_RGN_Attention(models.Model):
-
-    def __init__(self, batch_size):
-        super(NBCC_RGN_Attention, self).__init__()
-
-        self.batch_size = batch_size
-
-        # Attention Network
-        self.enc = Encoder()
-        self.dec = Decoder()
-
-    def call(self, inputs, training=True):
-        x, y = inputs
-
-        x = tf.transpose(x, perm=(1, 0, 2))     # (batch, N, 62)
-        y = tf.transpose(y, perm=(1, 0, 2))     # (batch, N*3, 3)
-
-        print('inputs       :', x.shape)
-        print('y-tertiary   :', y.shape)
-
-        """
-        Gradient vanishing of RNN is solved by collecting all hidden states of the encoder
-        and passing them to the decoder.
-
-        Query and key-value pair.
-        Compare which K is similar to Q and synthesize V based on the similarity.
-
-        Encoder's hidden layers are used as key and value.
-        The hidden layers of the decoder (one of the previous timesteps) are used as query.
-        """
-
-        H, h, c = self.enc(x)   # output, hidden state, cell state
-
-        coordinates = self.dec((y, h, c, H))
-
-
-        # predicted coordinates
-        coordinates = tf.transpose(coordinates, perm=(1, 0, 2))
-        print('coordinates  :', coordinates.shape)
-        print()
-
-        return coordinates
 
 # ==========================================================================

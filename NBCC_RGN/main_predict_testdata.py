@@ -3,14 +3,10 @@ import glob
 import numpy as np
 from itertools import cycle
 import tensorflow as tf
-from tensorflow.keras import layers, models, losses, optimizers, metrics, losses
-from geom_ops import reduce_mean_angle, dihedral_to_point, point_to_coordinate
 from utils import mask_and_weight, tertiary_loss, accumulated_loss, mapping_func, filter_func, get_data
+from utils import NBCC_RGN, adam_optimizer
 
 """
-python 3.7 (anaconda3-2020.02)
-tensorflow 2.2
-
 *** output directory : outputsTest/
 
     id_backbone.pdb : coordinates of ProteinNet data
@@ -21,18 +17,13 @@ tensorflow 2.2
 NUM_DIHEDRALS = 3
 
 batch_size = 32
-max_seq_length = 700
-alphabet_size = 60
-lstm_cells = 800
 
+scale = 0.01   # convert to angstroms
 atoms = ['N ', 'CA', 'C ']
-
 num2aa_dict = {0: 'ALA', 1: 'CYS', 2: 'ASP', 3: 'GLU', 4: 'PHE',
                5: 'GLY', 6: 'HIS', 7: 'ILE', 8: 'LYS', 9: 'LUE',
                10: 'MET', 11: 'ASN', 12: 'PRO', 13: 'GLN', 14: 'ARG',
                15: 'SER', 16: 'THR', 17: 'VAL', 18: 'TRP', 19: 'TYR'}
-
-scale = 0.01   # convert to angstroms
 
 output_dir = 'outputsTest'
 if not os.path.exists(output_dir):
@@ -42,78 +33,9 @@ test_files = glob.glob('./RGN11/data/ProteinNet11/testing/*')
 test_dataset  = tf.data.TFRecordDataset(tf.data.Dataset.list_files(test_files)).map(mapping_func).filter(filter_func).batch(batch_size, drop_remainder=True).prefetch(1)
 
 # ==========================================================================
-class CoordinateLayer(tf.keras.layers.Layer):
-    """
-    When saving the model, a RuntimeError is raised because num_steps is 'None'.
-    When initializing this layer, num_steps is initialized to max_seq_length,
-    then the num_steps value changed in call() for each batch.
-    So when saving the model, num_steps is recognized as 'Tensor' and saved normally.
-    """
-    def __init__(self, num_steps):
-        super(CoordinateLayer, self).__init__()
-        self.num_steps = num_steps
-
-    def call(self, flat_dihedrals):
-        self.num_steps = tf.cast(tf.divide(tf.shape(flat_dihedrals)[0], batch_size), dtype=tf.int32)
-
-        # flat_dihedrals (N x batch_size, 3)
-        dihedrals = tf.reshape(flat_dihedrals, [self.num_steps, batch_size, NUM_DIHEDRALS]) # (N, batch_size, 3)
-        points = dihedral_to_point(dihedrals)       # (N x 3, batch_size, 3)
-        coordinates = point_to_coordinate(points)   # (N x 3, batch_size, 3)
-        return coordinates
-
-
-class NBCC_RGN(models.Model):
-
-    def __init__(self):
-        super(NBCC_RGN, self).__init__()
-
-        # alphabet
-        alphabet_initializer = tf.random_uniform_initializer(minval=-3.14159, maxval=3.14159)
-        self.alphabets = self.add_weight(shape=(alphabet_size, NUM_DIHEDRALS), initializer=alphabet_initializer, trainable=True, name='alphabets')
-
-        # Bi-directional LSTM
-        self.lstm1 = layers.Bidirectional(layers.LSTM(lstm_cells, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm1')
-        self.lstm2 = layers.Bidirectional(layers.LSTM(lstm_cells, time_major=True, return_sequences=True, dropout=0.5), name='bi_lstm2')
-
-        # dihedrals
-        self.dense1 = layers.Dense(60, name='flatten')
-        self.softmax = layers.Softmax(name='softmax')
-
-        # dihedrals to coordinates
-        self.coordinate_layer = CoordinateLayer(max_seq_length) # initialize by max_seq_length
-
-    def call(self, inputs, training=True):
-        # inputs : (N, batch_size, 62)
-        # -------------------------------------------------
-        # RNN
-        x = self.lstm1(inputs, training=training)   # (N, batch_size, 1600)
-        x = self.lstm2(x, training=training)        # (N, batch_size, 1600)
-
-        # -------------------------------------------------
-        # dihedrals
-        x = self.dense1(x)                          # (N, batch_size, 60)
-        flat_x = tf.reshape(x, [-1, 60])            # (N x batch_size, 60)
-        x = self.softmax(flat_x)                    # (N x batch_size, 60)
-        flat_dihedrals = reduce_mean_angle(x, self.alphabets) # (N x batch_size, 60) * (60, 3) = (N x batch_size, 3)
-
-        # -------------------------------------------------
-        # dihedrals to coordinates
-        coordinates = self.coordinate_layer(flat_dihedrals)
-
-        return coordinates
-
-    def get_config(self):
-        config = super().get_config().copy()
-        config.update({
-            'coordinate_layer': self.coordinate_layer,
-        })
-        return config
-
-
-# ==========================================================================
-model = NBCC_RGN()
-optimizer = optimizers.Adam(learning_rate=0.0001, beta_1=0.95, beta_2=0.99, epsilon=1e-07)
+# generate RGN model and optimizer
+model = NBCC_RGN(batch_size)
+optimizer = adam_optimizer()
 
 # -------------------------------------------------
 # CheckpointManager
@@ -128,11 +50,6 @@ else:
     # restore weights from last checkpoint.
     print('Restored from {}'.format(last_ckpt))
     ckpt.restore(last_ckpt)
-    current_epoch = int(last_ckpt.split('-')[1])
-    # min_valid_loss
-    with open('{}/ckpt-{}.loss'.format(ckpt_dir, current_epoch), "r") as f:
-        min_valid_loss = float(f.readlines()[0])
-
 
 # -------------------------------------------------
 # predic test dataset
@@ -149,7 +66,7 @@ for element in test_dataset:
     pred_coords = model(inputs, training=False)
 
     # dRMSD Loss
-    _, losses_filtered, loss_factors, drmsd = tertiary_loss(pred_coords, tertiaries, ter_masks, weights)
+    _, losses_filtered, loss_factors, drmsd = tertiary_loss(pred_coords, tertiaries, ter_masks, weights, batch_size)
     _accumulated_loss_filtered.extend(losses_filtered.numpy())
     _accumulated_loss_factors.extend(loss_factors.numpy())
 

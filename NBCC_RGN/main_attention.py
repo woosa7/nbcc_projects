@@ -2,7 +2,7 @@ import os
 import glob
 import tensorflow as tf
 from utils import mask_and_weight, tertiary_loss, accumulated_loss, mapping_func, filter_func, get_data
-from base_model import NBCC_RGN, adam_optimizer
+from attention_model import NBCC_RGN_Attention, adam_optimizer, NBCC_RGN_Attention_3
 
 """
 python 3.7 (anaconda3-2020.02)
@@ -33,7 +33,9 @@ valid_dataset = tf.data.TFRecordDataset(tf.data.Dataset.list_files(valid_files))
 # generate RGN model and optimizer
 optimizer = adam_optimizer()
 
-model = NBCC_RGN(batch_size)
+# Attention Network
+model = NBCC_RGN_Attention(batch_size)
+# model = NBCC_RGN_Attention_3(batch_size)
 
 # -------------------------------------------------
 # CheckpointManager
@@ -74,9 +76,49 @@ for epoch in range(current_epoch, total_epochs, 1):
         inputs, tertiaries, masks, _ = get_data(features)
         ter_masks, weights = mask_and_weight(masks)
 
+        inputs = tf.transpose(inputs, perm=(1, 0, 2))
+        # print('inputs :', inputs.shape)                # (32,  659, 62)
+        # print('tertiaries :', tertiaries.shape)        # (32, 1977, 3)
+
+        # ----------------------------------------------------------------------
+        # for k in range(inputs.shape[0]):
+        #     prot = inputs[k,:,:]
+        #
+        #     for j in range(prot.shape[0]):
+        #         residue = prot[j,:]
+        #         # atom_type
+        #         atom1 = tf.concat([residue, tf.constant([1.0,0.0,0.0])], axis=0)    # N
+        #         atom2 = tf.concat([residue, tf.constant([0.0,1.0,0.0])], axis=0)    # CA
+        #         atom3 = tf.concat([residue, tf.constant([0.0,0.0,1.0])], axis=0)    # C
+        #         atom1 = tf.expand_dims(atom1, axis=0)
+        #         atom2 = tf.expand_dims(atom2, axis=0)
+        #         atom3 = tf.expand_dims(atom3, axis=0)
+        #
+        #         if j == 0:
+        #             atoms = tf.concat([atom1, atom2, atom3], axis=0)
+        #         else:
+        #             atoms = tf.concat([atoms, atom1, atom2, atom3], axis=0)
+        #
+        #     atoms = tf.expand_dims(atoms, axis=0)
+        #
+        #     if k == 0:
+        #         inputs2 = tf.identity(atoms)
+        #     else:
+        #         inputs2 = tf.concat([inputs2, atoms], axis=0)
+
+        # inputs2 : (32, 1977, 65)
+        # print('inputs2 :', inputs2.shape)
+        # ----------------------------------------------------------------------
+
         # compute gradient and optimization
         with tf.GradientTape() as tape:
-            pred_coords = model(inputs, training=True)  # LSTM
+            sos = tf.ones(shape=[1, 32, 3], dtype=tf.float32)
+            labels = tf.concat([sos, tertiaries], axis=0)
+            shifted_labels = labels[:-1,:,:]
+            shifted_labels = tf.transpose(shifted_labels, perm=(1, 0, 2))     # (batch, N, 3)
+            pred_coords = model([inputs, shifted_labels], training=True)
+
+            # pred_coords = model([inputs2, tertiaries], training=True)
 
             # dRMSD Loss
             loss, losses_filtered, loss_factors, _ = tertiary_loss(pred_coords, tertiaries, ter_masks, weights, batch_size)
@@ -90,11 +132,13 @@ for epoch in range(current_epoch, total_epochs, 1):
         _accumulated_loss_factors.extend(loss_factors.numpy())
 
         current_step += 1
-        if current_step == 300: break
+        if current_step == 30: break
+
 
     current_epoch += 1
     global_loss = accumulated_loss(_accumulated_loss_filtered, _accumulated_loss_factors)
-    # print('{:10.2f}'.format(float(global_loss)))
+
+    # print('global_loss: {:10.2f}'.format(float(global_loss)))
 
     with open(log_train, "a") as f:
         print('{:10.2f}'.format(float(global_loss)), file=f)
@@ -104,14 +148,15 @@ for epoch in range(current_epoch, total_epochs, 1):
     _accumulated_loss_filtered = []
     _accumulated_loss_factors = []
 
-    for element in valid_dataset:
+    for element in valid_dataset.take(1):
         features = element[0]
         ids = element[1]
         inputs, tertiaries, masks, _ = get_data(features)
         ter_masks, weights = mask_and_weight(masks)
-
+    
         # prediction
         pred_coords = model(inputs, training=False)
+
 
         # dRMSD Loss
         valid_loss, losses_filtered, loss_factors, _ = tertiary_loss(pred_coords, tertiaries, ter_masks, weights, batch_size)
