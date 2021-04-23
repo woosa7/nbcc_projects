@@ -1,0 +1,6 @@
+
+1) ls -v renergy.dat.* > old_filename
+2) replace "renergy.dat.X" with "mv renergy.dat.X" in old_filename
+4) make new_filename by hand
+5) paste old_filename new_filename > rename.sh
+

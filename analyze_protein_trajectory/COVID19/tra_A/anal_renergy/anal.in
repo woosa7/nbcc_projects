@@ -1,0 +1,144 @@
+
+# set topology file
+
+parm ../top/cv30com_rbd.top
+
+# read trajectories
+
+trajin ../rst/cv30com_rbd_A_md0001.rst
+trajin ../rst/cv30com_rbd_A_md0002.rst
+trajin ../rst/cv30com_rbd_A_md0003.rst
+trajin ../rst/cv30com_rbd_A_md0004.rst
+trajin ../rst/cv30com_rbd_A_md0005.rst
+trajin ../rst/cv30com_rbd_A_md0006.rst
+trajin ../rst/cv30com_rbd_A_md0007.rst
+trajin ../rst/cv30com_rbd_A_md0008.rst
+trajin ../rst/cv30com_rbd_A_md0009.rst
+trajin ../rst/cv30com_rbd_A_md0010.rst
+
+trajin ../rst/cv30com_rbd_A_md0011.rst
+trajin ../rst/cv30com_rbd_A_md0012.rst
+trajin ../rst/cv30com_rbd_A_md0013.rst
+trajin ../rst/cv30com_rbd_A_md0014.rst
+trajin ../rst/cv30com_rbd_A_md0015.rst
+trajin ../rst/cv30com_rbd_A_md0016.rst
+trajin ../rst/cv30com_rbd_A_md0017.rst
+trajin ../rst/cv30com_rbd_A_md0018.rst
+trajin ../rst/cv30com_rbd_A_md0019.rst
+trajin ../rst/cv30com_rbd_A_md0020.rst
+
+trajin ../rst/cv30com_rbd_A_md0021.rst
+trajin ../rst/cv30com_rbd_A_md0022.rst
+trajin ../rst/cv30com_rbd_A_md0023.rst
+trajin ../rst/cv30com_rbd_A_md0024.rst
+trajin ../rst/cv30com_rbd_A_md0025.rst
+trajin ../rst/cv30com_rbd_A_md0026.rst
+trajin ../rst/cv30com_rbd_A_md0027.rst
+trajin ../rst/cv30com_rbd_A_md0028.rst
+trajin ../rst/cv30com_rbd_A_md0029.rst
+trajin ../rst/cv30com_rbd_A_md0030.rst
+
+trajin ../rst/cv30com_rbd_A_md0031.rst
+trajin ../rst/cv30com_rbd_A_md0032.rst
+trajin ../rst/cv30com_rbd_A_md0033.rst
+trajin ../rst/cv30com_rbd_A_md0034.rst
+trajin ../rst/cv30com_rbd_A_md0035.rst
+trajin ../rst/cv30com_rbd_A_md0036.rst
+trajin ../rst/cv30com_rbd_A_md0037.rst
+trajin ../rst/cv30com_rbd_A_md0038.rst
+trajin ../rst/cv30com_rbd_A_md0039.rst
+trajin ../rst/cv30com_rbd_A_md0040.rst
+
+trajin ../rst/cv30com_rbd_A_md0041.rst
+trajin ../rst/cv30com_rbd_A_md0042.rst
+trajin ../rst/cv30com_rbd_A_md0043.rst
+trajin ../rst/cv30com_rbd_A_md0044.rst
+trajin ../rst/cv30com_rbd_A_md0045.rst
+trajin ../rst/cv30com_rbd_A_md0046.rst
+trajin ../rst/cv30com_rbd_A_md0047.rst
+trajin ../rst/cv30com_rbd_A_md0048.rst
+trajin ../rst/cv30com_rbd_A_md0049.rst
+trajin ../rst/cv30com_rbd_A_md0050.rst
+
+trajin ../rst/cv30com_rbd_A_md0051.rst
+trajin ../rst/cv30com_rbd_A_md0052.rst
+trajin ../rst/cv30com_rbd_A_md0053.rst
+trajin ../rst/cv30com_rbd_A_md0054.rst
+trajin ../rst/cv30com_rbd_A_md0055.rst
+trajin ../rst/cv30com_rbd_A_md0056.rst
+trajin ../rst/cv30com_rbd_A_md0057.rst
+trajin ../rst/cv30com_rbd_A_md0058.rst
+trajin ../rst/cv30com_rbd_A_md0059.rst
+trajin ../rst/cv30com_rbd_A_md0060.rst
+
+trajin ../rst/cv30com_rbd_A_md0061.rst
+trajin ../rst/cv30com_rbd_A_md0062.rst
+trajin ../rst/cv30com_rbd_A_md0063.rst
+trajin ../rst/cv30com_rbd_A_md0064.rst
+trajin ../rst/cv30com_rbd_A_md0065.rst
+trajin ../rst/cv30com_rbd_A_md0066.rst
+trajin ../rst/cv30com_rbd_A_md0067.rst
+trajin ../rst/cv30com_rbd_A_md0068.rst
+trajin ../rst/cv30com_rbd_A_md0069.rst
+trajin ../rst/cv30com_rbd_A_md0070.rst
+
+trajin ../rst/cv30com_rbd_A_md0071.rst
+trajin ../rst/cv30com_rbd_A_md0072.rst
+trajin ../rst/cv30com_rbd_A_md0073.rst
+trajin ../rst/cv30com_rbd_A_md0074.rst
+trajin ../rst/cv30com_rbd_A_md0075.rst
+trajin ../rst/cv30com_rbd_A_md0076.rst
+trajin ../rst/cv30com_rbd_A_md0077.rst
+trajin ../rst/cv30com_rbd_A_md0078.rst
+trajin ../rst/cv30com_rbd_A_md0079.rst
+trajin ../rst/cv30com_rbd_A_md0080.rst
+
+trajin ../rst/cv30com_rbd_A_md0081.rst
+trajin ../rst/cv30com_rbd_A_md0082.rst
+trajin ../rst/cv30com_rbd_A_md0083.rst
+trajin ../rst/cv30com_rbd_A_md0084.rst
+trajin ../rst/cv30com_rbd_A_md0085.rst
+trajin ../rst/cv30com_rbd_A_md0086.rst
+trajin ../rst/cv30com_rbd_A_md0087.rst
+trajin ../rst/cv30com_rbd_A_md0088.rst
+trajin ../rst/cv30com_rbd_A_md0089.rst
+trajin ../rst/cv30com_rbd_A_md0090.rst
+
+trajin ../rst/cv30com_rbd_A_md0091.rst
+trajin ../rst/cv30com_rbd_A_md0092.rst
+trajin ../rst/cv30com_rbd_A_md0093.rst
+trajin ../rst/cv30com_rbd_A_md0094.rst
+trajin ../rst/cv30com_rbd_A_md0095.rst
+trajin ../rst/cv30com_rbd_A_md0096.rst
+trajin ../rst/cv30com_rbd_A_md0097.rst
+trajin ../rst/cv30com_rbd_A_md0098.rst
+trajin ../rst/cv30com_rbd_A_md0099.rst
+trajin ../rst/cv30com_rbd_A_md0100.rst
+
+#
+# notice the following structure info
+#
+#   monomer_1 (antibody)  :   1-439 (439 residues) comprising heavy (1-224, 224 residues) and light (225-439, 215 residues) chains
+#   monomer_2 (RBD)       : 440-648 (209 residues)
+#
+
+# centering
+
+strip :WAT
+strip :Na+
+strip :Cl-
+
+center :1-224 mass origin
+image origin center familiar
+center :1-439 mass origin
+image origin center familiar
+center :1-648 mass origin
+image origin center familiar
+
+# total energy with decomposition
+
+totalenergy_with_decom :1-648 out tenergy.dat rout renergy.dat
+
+totalenergy_with_decom :1-439   out tenergy_monomer_1.dat rout renergy_monomer_1.dat
+totalenergy_with_decom :440-648 out tenergy_monomer_2.dat rout renergy_monomer_2.dat
+

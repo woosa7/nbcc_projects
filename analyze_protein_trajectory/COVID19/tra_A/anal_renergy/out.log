@@ -1,0 +1,733 @@
+
+CPPTRAJ: Trajectory Analysis. V15.00
+    ___  ___  ___  ___
+     | \/ | \/ | \/ | 
+    _|_/\_|_/\_|_/\_|_
+
+| Date/time: 04/11/21  15:25:58
+| Available memory: 2210.86 MB
+
+INPUT: Reading Input from file anal.in
+  [parm ../top/cv30com_rbd.top]
+	Reading '../top/cv30com_rbd.top' as Amber Topology
+  [trajin ../rst/cv30com_rbd_A_md0001.rst]
+	Reading '../rst/cv30com_rbd_A_md0001.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0002.rst]
+	Reading '../rst/cv30com_rbd_A_md0002.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0003.rst]
+	Reading '../rst/cv30com_rbd_A_md0003.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0004.rst]
+	Reading '../rst/cv30com_rbd_A_md0004.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0005.rst]
+	Reading '../rst/cv30com_rbd_A_md0005.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0006.rst]
+	Reading '../rst/cv30com_rbd_A_md0006.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0007.rst]
+	Reading '../rst/cv30com_rbd_A_md0007.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0008.rst]
+	Reading '../rst/cv30com_rbd_A_md0008.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0009.rst]
+	Reading '../rst/cv30com_rbd_A_md0009.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0010.rst]
+	Reading '../rst/cv30com_rbd_A_md0010.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0011.rst]
+	Reading '../rst/cv30com_rbd_A_md0011.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0012.rst]
+	Reading '../rst/cv30com_rbd_A_md0012.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0013.rst]
+	Reading '../rst/cv30com_rbd_A_md0013.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0014.rst]
+	Reading '../rst/cv30com_rbd_A_md0014.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0015.rst]
+	Reading '../rst/cv30com_rbd_A_md0015.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0016.rst]
+	Reading '../rst/cv30com_rbd_A_md0016.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0017.rst]
+	Reading '../rst/cv30com_rbd_A_md0017.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0018.rst]
+	Reading '../rst/cv30com_rbd_A_md0018.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0019.rst]
+	Reading '../rst/cv30com_rbd_A_md0019.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0020.rst]
+	Reading '../rst/cv30com_rbd_A_md0020.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0021.rst]
+	Reading '../rst/cv30com_rbd_A_md0021.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0022.rst]
+	Reading '../rst/cv30com_rbd_A_md0022.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0023.rst]
+	Reading '../rst/cv30com_rbd_A_md0023.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0024.rst]
+	Reading '../rst/cv30com_rbd_A_md0024.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0025.rst]
+	Reading '../rst/cv30com_rbd_A_md0025.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0026.rst]
+	Reading '../rst/cv30com_rbd_A_md0026.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0027.rst]
+	Reading '../rst/cv30com_rbd_A_md0027.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0028.rst]
+	Reading '../rst/cv30com_rbd_A_md0028.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0029.rst]
+	Reading '../rst/cv30com_rbd_A_md0029.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0030.rst]
+	Reading '../rst/cv30com_rbd_A_md0030.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0031.rst]
+	Reading '../rst/cv30com_rbd_A_md0031.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0032.rst]
+	Reading '../rst/cv30com_rbd_A_md0032.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0033.rst]
+	Reading '../rst/cv30com_rbd_A_md0033.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0034.rst]
+	Reading '../rst/cv30com_rbd_A_md0034.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0035.rst]
+	Reading '../rst/cv30com_rbd_A_md0035.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0036.rst]
+	Reading '../rst/cv30com_rbd_A_md0036.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0037.rst]
+	Reading '../rst/cv30com_rbd_A_md0037.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0038.rst]
+	Reading '../rst/cv30com_rbd_A_md0038.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0039.rst]
+	Reading '../rst/cv30com_rbd_A_md0039.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0040.rst]
+	Reading '../rst/cv30com_rbd_A_md0040.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0041.rst]
+	Reading '../rst/cv30com_rbd_A_md0041.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0042.rst]
+	Reading '../rst/cv30com_rbd_A_md0042.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0043.rst]
+	Reading '../rst/cv30com_rbd_A_md0043.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0044.rst]
+	Reading '../rst/cv30com_rbd_A_md0044.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0045.rst]
+	Reading '../rst/cv30com_rbd_A_md0045.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0046.rst]
+	Reading '../rst/cv30com_rbd_A_md0046.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0047.rst]
+	Reading '../rst/cv30com_rbd_A_md0047.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0048.rst]
+	Reading '../rst/cv30com_rbd_A_md0048.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0049.rst]
+	Reading '../rst/cv30com_rbd_A_md0049.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0050.rst]
+	Reading '../rst/cv30com_rbd_A_md0050.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0051.rst]
+	Reading '../rst/cv30com_rbd_A_md0051.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0052.rst]
+	Reading '../rst/cv30com_rbd_A_md0052.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0053.rst]
+	Reading '../rst/cv30com_rbd_A_md0053.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0054.rst]
+	Reading '../rst/cv30com_rbd_A_md0054.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0055.rst]
+	Reading '../rst/cv30com_rbd_A_md0055.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0056.rst]
+	Reading '../rst/cv30com_rbd_A_md0056.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0057.rst]
+	Reading '../rst/cv30com_rbd_A_md0057.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0058.rst]
+	Reading '../rst/cv30com_rbd_A_md0058.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0059.rst]
+	Reading '../rst/cv30com_rbd_A_md0059.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0060.rst]
+	Reading '../rst/cv30com_rbd_A_md0060.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0061.rst]
+	Reading '../rst/cv30com_rbd_A_md0061.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0062.rst]
+	Reading '../rst/cv30com_rbd_A_md0062.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0063.rst]
+	Reading '../rst/cv30com_rbd_A_md0063.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0064.rst]
+	Reading '../rst/cv30com_rbd_A_md0064.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0065.rst]
+	Reading '../rst/cv30com_rbd_A_md0065.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0066.rst]
+	Reading '../rst/cv30com_rbd_A_md0066.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0067.rst]
+	Reading '../rst/cv30com_rbd_A_md0067.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0068.rst]
+	Reading '../rst/cv30com_rbd_A_md0068.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0069.rst]
+	Reading '../rst/cv30com_rbd_A_md0069.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0070.rst]
+	Reading '../rst/cv30com_rbd_A_md0070.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0071.rst]
+	Reading '../rst/cv30com_rbd_A_md0071.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0072.rst]
+	Reading '../rst/cv30com_rbd_A_md0072.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0073.rst]
+	Reading '../rst/cv30com_rbd_A_md0073.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0074.rst]
+	Reading '../rst/cv30com_rbd_A_md0074.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0075.rst]
+	Reading '../rst/cv30com_rbd_A_md0075.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0076.rst]
+	Reading '../rst/cv30com_rbd_A_md0076.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0077.rst]
+	Reading '../rst/cv30com_rbd_A_md0077.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0078.rst]
+	Reading '../rst/cv30com_rbd_A_md0078.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0079.rst]
+	Reading '../rst/cv30com_rbd_A_md0079.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0080.rst]
+	Reading '../rst/cv30com_rbd_A_md0080.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0081.rst]
+	Reading '../rst/cv30com_rbd_A_md0081.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0082.rst]
+	Reading '../rst/cv30com_rbd_A_md0082.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0083.rst]
+	Reading '../rst/cv30com_rbd_A_md0083.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0084.rst]
+	Reading '../rst/cv30com_rbd_A_md0084.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0085.rst]
+	Reading '../rst/cv30com_rbd_A_md0085.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0086.rst]
+	Reading '../rst/cv30com_rbd_A_md0086.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0087.rst]
+	Reading '../rst/cv30com_rbd_A_md0087.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0088.rst]
+	Reading '../rst/cv30com_rbd_A_md0088.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0089.rst]
+	Reading '../rst/cv30com_rbd_A_md0089.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0090.rst]
+	Reading '../rst/cv30com_rbd_A_md0090.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0091.rst]
+	Reading '../rst/cv30com_rbd_A_md0091.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0092.rst]
+	Reading '../rst/cv30com_rbd_A_md0092.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0093.rst]
+	Reading '../rst/cv30com_rbd_A_md0093.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0094.rst]
+	Reading '../rst/cv30com_rbd_A_md0094.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0095.rst]
+	Reading '../rst/cv30com_rbd_A_md0095.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0096.rst]
+	Reading '../rst/cv30com_rbd_A_md0096.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0097.rst]
+	Reading '../rst/cv30com_rbd_A_md0097.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0098.rst]
+	Reading '../rst/cv30com_rbd_A_md0098.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0099.rst]
+	Reading '../rst/cv30com_rbd_A_md0099.rst' as Amber NC Restart
+  [trajin ../rst/cv30com_rbd_A_md0100.rst]
+	Reading '../rst/cv30com_rbd_A_md0100.rst' as Amber NC Restart
+  [strip :WAT]
+    STRIP: Stripping atoms in mask [:WAT]
+  [strip :Na+]
+    STRIP: Stripping atoms in mask [:Na+]
+  [strip :Cl-]
+    STRIP: Stripping atoms in mask [:Cl-]
+  [center :1-224 mass origin]
+    CENTER: Centering coordinates using center of mass of atoms in mask (:1-224) to
+	coordinate origin.
+  [image origin center familiar]
+    IMAGE: By molecule to origin based on center of mass using atoms in mask *
+           Triclinic On, familiar shape.
+  [center :1-439 mass origin]
+    CENTER: Centering coordinates using center of mass of atoms in mask (:1-439) to
+	coordinate origin.
+  [image origin center familiar]
+    IMAGE: By molecule to origin based on center of mass using atoms in mask *
+           Triclinic On, familiar shape.
+  [center :1-648 mass origin]
+    CENTER: Centering coordinates using center of mass of atoms in mask (:1-648) to
+	coordinate origin.
+  [image origin center familiar]
+    IMAGE: By molecule to origin based on center of mass using atoms in mask *
+           Triclinic On, familiar shape.
+  [totalenergy_with_decom :1-648 out tenergy.dat rout renergy.dat]
+    TOTALENERGY with decomposition: Atoms in mask [:1-648]
+  [totalenergy_with_decom :1-439 out tenergy_monomer_1.dat rout renergy_monomer_1.dat]
+    TOTALENERGY with decomposition: Atoms in mask [:1-439]
+  [totalenergy_with_decom :440-648 out tenergy_monomer_2.dat rout renergy_monomer_2.dat]
+    TOTALENERGY with decomposition: Atoms in mask [:440-648]
+---------- RUN BEGIN -------------------------------------------------
+
+PARAMETER FILES:
+ 0: 'cv30com_rbd.top', 150968 atoms, 47729 res, box: Orthogonal, 47084 mol, 47073 solvent, 100 frames
+
+INPUT TRAJECTORIES:
+ 0: 'cv30com_rbd_A_md0001.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 1: 'cv30com_rbd_A_md0002.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 2: 'cv30com_rbd_A_md0003.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 3: 'cv30com_rbd_A_md0004.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 4: 'cv30com_rbd_A_md0005.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 5: 'cv30com_rbd_A_md0006.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 6: 'cv30com_rbd_A_md0007.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 7: 'cv30com_rbd_A_md0008.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 8: 'cv30com_rbd_A_md0009.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 9: 'cv30com_rbd_A_md0010.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 10: 'cv30com_rbd_A_md0011.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 11: 'cv30com_rbd_A_md0012.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 12: 'cv30com_rbd_A_md0013.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 13: 'cv30com_rbd_A_md0014.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 14: 'cv30com_rbd_A_md0015.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 15: 'cv30com_rbd_A_md0016.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 16: 'cv30com_rbd_A_md0017.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 17: 'cv30com_rbd_A_md0018.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 18: 'cv30com_rbd_A_md0019.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 19: 'cv30com_rbd_A_md0020.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 20: 'cv30com_rbd_A_md0021.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 21: 'cv30com_rbd_A_md0022.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 22: 'cv30com_rbd_A_md0023.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 23: 'cv30com_rbd_A_md0024.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 24: 'cv30com_rbd_A_md0025.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 25: 'cv30com_rbd_A_md0026.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 26: 'cv30com_rbd_A_md0027.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 27: 'cv30com_rbd_A_md0028.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 28: 'cv30com_rbd_A_md0029.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 29: 'cv30com_rbd_A_md0030.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 30: 'cv30com_rbd_A_md0031.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 31: 'cv30com_rbd_A_md0032.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 32: 'cv30com_rbd_A_md0033.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 33: 'cv30com_rbd_A_md0034.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 34: 'cv30com_rbd_A_md0035.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 35: 'cv30com_rbd_A_md0036.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 36: 'cv30com_rbd_A_md0037.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 37: 'cv30com_rbd_A_md0038.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 38: 'cv30com_rbd_A_md0039.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 39: 'cv30com_rbd_A_md0040.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 40: 'cv30com_rbd_A_md0041.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 41: 'cv30com_rbd_A_md0042.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 42: 'cv30com_rbd_A_md0043.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 43: 'cv30com_rbd_A_md0044.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 44: 'cv30com_rbd_A_md0045.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 45: 'cv30com_rbd_A_md0046.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 46: 'cv30com_rbd_A_md0047.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 47: 'cv30com_rbd_A_md0048.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 48: 'cv30com_rbd_A_md0049.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 49: 'cv30com_rbd_A_md0050.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 50: 'cv30com_rbd_A_md0051.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 51: 'cv30com_rbd_A_md0052.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 52: 'cv30com_rbd_A_md0053.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 53: 'cv30com_rbd_A_md0054.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 54: 'cv30com_rbd_A_md0055.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 55: 'cv30com_rbd_A_md0056.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 56: 'cv30com_rbd_A_md0057.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 57: 'cv30com_rbd_A_md0058.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 58: 'cv30com_rbd_A_md0059.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 59: 'cv30com_rbd_A_md0060.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 60: 'cv30com_rbd_A_md0061.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 61: 'cv30com_rbd_A_md0062.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 62: 'cv30com_rbd_A_md0063.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 63: 'cv30com_rbd_A_md0064.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 64: 'cv30com_rbd_A_md0065.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 65: 'cv30com_rbd_A_md0066.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 66: 'cv30com_rbd_A_md0067.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 67: 'cv30com_rbd_A_md0068.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 68: 'cv30com_rbd_A_md0069.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 69: 'cv30com_rbd_A_md0070.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 70: 'cv30com_rbd_A_md0071.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 71: 'cv30com_rbd_A_md0072.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 72: 'cv30com_rbd_A_md0073.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 73: 'cv30com_rbd_A_md0074.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 74: 'cv30com_rbd_A_md0075.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 75: 'cv30com_rbd_A_md0076.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 76: 'cv30com_rbd_A_md0077.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 77: 'cv30com_rbd_A_md0078.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 78: 'cv30com_rbd_A_md0079.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 79: 'cv30com_rbd_A_md0080.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 80: 'cv30com_rbd_A_md0081.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 81: 'cv30com_rbd_A_md0082.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 82: 'cv30com_rbd_A_md0083.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 83: 'cv30com_rbd_A_md0084.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 84: 'cv30com_rbd_A_md0085.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 85: 'cv30com_rbd_A_md0086.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 86: 'cv30com_rbd_A_md0087.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 87: 'cv30com_rbd_A_md0088.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 88: 'cv30com_rbd_A_md0089.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 89: 'cv30com_rbd_A_md0090.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 90: 'cv30com_rbd_A_md0091.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 91: 'cv30com_rbd_A_md0092.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 92: 'cv30com_rbd_A_md0093.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 93: 'cv30com_rbd_A_md0094.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 94: 'cv30com_rbd_A_md0095.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 95: 'cv30com_rbd_A_md0096.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 96: 'cv30com_rbd_A_md0097.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 97: 'cv30com_rbd_A_md0098.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 98: 'cv30com_rbd_A_md0099.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+ 99: 'cv30com_rbd_A_md0100.rst' is a NetCDF AMBER restart file, with velocities, Parm cv30com_rbd.top (Orthogonal box) (reading 1 of 1)
+  Coordinate processing will occur on 100 frames.
+TIME: Run Initialization took 0.0003 seconds.
+
+BEGIN TRAJECTORY PROCESSING:
+.....................................................
+ACTION SETUP FOR PARM 'cv30com_rbd.top' (12 actions):
+  0: [strip :WAT]
+	Stripping 141219 atoms.
+	Stripped parm: 'cv30com_rbd.top', 9749 atoms, 656 res, box: Orthogonal, 11 mol
+  1: [strip :Na+]
+	Stripping 0 atoms.
+Warning: No atoms to strip. Skipping 'strip' for topology 'cv30com_rbd.top'
+Warning: Setup failed for [strip :Na+]: Skipping
+  2: [strip :Cl-]
+	Stripping 8 atoms.
+	Stripped parm: 'cv30com_rbd.top', 9741 atoms, 648 res, box: Orthogonal, 3 mol
+  3: [center :1-224 mass origin]
+	Mask [:1-224] corresponds to 3273 atoms.
+  4: [image origin center familiar]
+	Number of molecules to be imaged is 3 based on mask '*'
+  5: [center :1-439 mass origin]
+	Mask [:1-439] corresponds to 6516 atoms.
+  6: [image origin center familiar]
+	Number of molecules to be imaged is 3 based on mask '*'
+  7: [center :1-648 mass origin]
+	Mask [:1-648] corresponds to 9741 atoms.
+  8: [image origin center familiar]
+	Number of molecules to be imaged is 3 based on mask '*'
+  9: [totalenergy_with_decom :1-648 out tenergy.dat rout renergy.dat]
+	Total-energy-with-decomposition calculation with amber topology.
+	Mask [:1-648] corresponds to 9741 atoms.
+	Mask :1-648 includes residues up to 648.
+  10: [totalenergy_with_decom :1-439 out tenergy_monomer_1.dat rout renergy_monomer_1.dat]
+	Total-energy-with-decomposition calculation with amber topology.
+	Mask [:1-439] corresponds to 6516 atoms.
+	Mask :1-439 includes residues up to 439.
+  11: [totalenergy_with_decom :440-648 out tenergy_monomer_2.dat rout renergy_monomer_2.dat]
+	Total-energy-with-decomposition calculation with amber topology.
+	Mask [:440-648] corresponds to 3225 atoms.
+	Mask :440-648 includes residues up to 648.
+----- cv30com_rbd_A_md0001.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0002.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0003.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0004.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0005.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0006.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0007.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0008.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0009.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0010.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0011.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0012.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0013.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0014.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0015.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0016.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0017.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0018.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0019.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0020.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0021.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0022.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0023.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0024.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0025.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0026.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0027.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0028.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0029.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0030.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0031.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0032.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0033.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0034.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0035.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0036.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0037.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0038.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0039.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0040.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0041.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0042.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0043.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0044.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0045.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0046.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0047.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0048.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0049.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0050.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0051.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0052.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0053.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0054.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0055.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0056.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0057.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0058.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0059.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0060.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0061.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0062.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0063.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0064.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0065.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0066.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0067.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0068.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0069.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0070.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0071.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0072.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0073.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0074.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0075.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0076.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0077.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0078.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0079.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0080.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0081.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0082.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0083.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0084.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0085.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0086.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0087.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0088.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0089.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0090.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0091.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0092.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0093.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0094.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0095.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0096.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0097.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0098.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0099.rst (1-1, 1) -----
+100% Complete.
+
+----- cv30com_rbd_A_md0100.rst (1-1, 1) -----
+100% Complete.
+
+Read 100 frames and processed 100 frames.
+TIME: Trajectory processing: 161.1141 s
+TIME: Avg. throughput= 0.6207 frames / second.
+
+ACTION OUTPUT:
+
+DATASETS:
+  24 data sets:
+	ETOTAL_00000 "ETOTAL_00000" (double), size is 100
+	EBOND_00001 "EBOND_00001" (double), size is 100
+	EANGLE_00002 "EANGLE_00002" (double), size is 100
+	EDIHEDRAL_00003 "EDIHEDRAL_00003" (double), size is 100
+	E14LJ_00004 "E14LJ_00004" (double), size is 100
+	E14ELEC_00005 "E14ELEC_00005" (double), size is 100
+	ELJ_00006 "ELJ_00006" (double), size is 100
+	EELEC_00007 "EELEC_00007" (double), size is 100
+	ETOTAL_00008 "ETOTAL_00008" (double), size is 100
+	EBOND_00009 "EBOND_00009" (double), size is 100
+	EANGLE_00010 "EANGLE_00010" (double), size is 100
+	EDIHEDRAL_00011 "EDIHEDRAL_00011" (double), size is 100
+	E14LJ_00012 "E14LJ_00012" (double), size is 100
+	E14ELEC_00013 "E14ELEC_00013" (double), size is 100
+	ELJ_00014 "ELJ_00014" (double), size is 100
+	EELEC_00015 "EELEC_00015" (double), size is 100
+	ETOTAL_00016 "ETOTAL_00016" (double), size is 100
+	EBOND_00017 "EBOND_00017" (double), size is 100
+	EANGLE_00018 "EANGLE_00018" (double), size is 100
+	EDIHEDRAL_00019 "EDIHEDRAL_00019" (double), size is 100
+	E14LJ_00020 "E14LJ_00020" (double), size is 100
+	E14ELEC_00021 "E14ELEC_00021" (double), size is 100
+	ELJ_00022 "ELJ_00022" (double), size is 100
+	EELEC_00023 "EELEC_00023" (double), size is 100
+
+DATAFILES:
+  tenergy.dat (Standard Data File):  ETOTAL_00000 EBOND_00001 EANGLE_00002 EDIHEDRAL_00003 E14LJ_00004 E14ELEC_00005 ELJ_00006 EELEC_00007
+  tenergy_monomer_1.dat (Standard Data File):  ETOTAL_00008 EBOND_00009 EANGLE_00010 EDIHEDRAL_00011 E14LJ_00012 E14ELEC_00013 ELJ_00014 EELEC_00015
+  tenergy_monomer_2.dat (Standard Data File):  ETOTAL_00016 EBOND_00017 EANGLE_00018 EDIHEDRAL_00019 E14LJ_00020 E14ELEC_00021 ELJ_00022 EELEC_00023
+---------- RUN END ---------------------------------------------------
+TIME: Total execution time: 161.9077 seconds.
+--------------------------------------------------------------------------------
+To cite CPPTRAJ use:
+Daniel R. Roe and Thomas E. Cheatham, III, "PTRAJ and CPPTRAJ: Software for
+  Processing and Analysis of Molecular Dynamics Trajectory Data". J. Chem.
+  Theory Comput., 2013, 9 (7), pp 3084-3095.
+
