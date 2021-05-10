@@ -21,7 +21,7 @@ output : delta_xmu_tot_from_xmua.dat
 
 dat_dir = sys.argv[1]
 list_dirs = sorted(glob.glob('{}/*'.format(dat_dir)))
-print('number of directories = {}'.format(len(list_dirs)))
+print('number of frame directories = {}'.format(len(list_dirs)))
 
 root_dir = os.getcwd()
 
@@ -93,7 +93,7 @@ for k, frame_dir in enumerate(list_dirs):
             data_mono.append(atom)
 
     n_atom = len(data_bi)
-    if not n_atom == len(data_bi):
+    if not n_atom == len(data_mono):
         print('error: inconsistency in atom number')
         sys.exit()
 
@@ -142,7 +142,7 @@ for k, frame_dir in enumerate(list_dirs):
             data_mono.append(res)
 
     n_res = len(data_bi)
-    if not n_res == len(data_bi):
+    if not n_res == len(data_mono):
         print('error: inconsistency in residue number')
         sys.exit()
 

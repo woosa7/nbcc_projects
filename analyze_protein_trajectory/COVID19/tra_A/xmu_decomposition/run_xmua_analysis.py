@@ -15,7 +15,7 @@ output: xmu_tot_from_xmua.dat
 
 dat_dir = sys.argv[1]
 list_dirs = sorted(glob.glob('{}/*'.format(dat_dir)))
-print('number of directories = {}'.format(len(list_dirs)))
+print('number of frame directories = {}'.format(len(list_dirs)))
 
 root_dir = os.getcwd()
 
