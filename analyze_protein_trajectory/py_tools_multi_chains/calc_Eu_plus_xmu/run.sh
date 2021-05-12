@@ -1,0 +1,11 @@
+cp ../../CV30_RBD/traj_A/3D-RISM/anal_tenergy/tenergy.dat ./energy.dat
+cp ../../CV30_RBD/traj_A/3D-RISM/xmu_only_calc/data_vs_time/BINARY/xmu_vs_time.dat .
+
+# cp ../../../anal_tenergy/tenergy.dat ./energy.dat
+# cp ../../xmu_only_calc/data_vs_time/BINARY/xmu_vs_time.dat .
+
+# /homes/eta/users/chong/project_covid19/tools/calc_Eu_plus_xmu/1000_ps_interval/run.exe
+
+python calc_Eu_plus_xmu.py
+
+rm -rf energy.dat
