@@ -1,0 +1,53 @@
+# ---------------------------------------
+# Full path of openmm_job_list
+job_list = '/homes/eta/users/aiteam/prowise/openmm_job_list'
+
+# Full path to the local directory where the simulation will run.
+work_dir = '../md_simulation'
+
+# Full path to the directory in which to save the simulation output files
+data_dir = '../md_simulation/sim_data'
+
+# ---------------------------------------
+node_no = 139
+gpu_no = 1
+
+force_field   = 'ff14SB'      # ff14SB or ff99SBildn
+solvent_model = 'TIP3PBOX'    # TIP3PBOX or TIP4PEWBOX
+buffer_size = 10              # restraint_wt
+
+init_temperature   = 0
+target_temperature = 300
+
+# ---------------------------------------
+# for minimization
+
+maxcyc_min_1 = 1000
+maxcyc_min_2 = 2500
+
+# ---------------------------------------
+# for equilibration
+# dt = 0.002 : constant
+
+nstlim_eq_1 = 10000           # 10000  * 0.002 = 20   ps
+nstlim_eq_2 = 100000          # 100000 * 0.002 = 200  ps
+ntb_eq = 1                    # 1 NVT (constant volume), 2 NPT (constant pressure)
+
+# ---------------------------------------
+# for production
+
+nstlim_md = 500000            # 500000 * 0.002 (dt) = 1000 ps = 1 ns
+ntb_md = 2                    # 1 NVT (constant volume), 2 NPT (constant pressure)
+pressure_md = 1.0
+ntwx_md = 2500                # 2500 * 0.002 = 5 ps / 5000 = 10 ps
+simulation_time_ns = 1        # duration of simulation
+
+# ---------------------------------------
+# for calc solvation free energy
+
+calc_mode = "a"               # m (Gsolv), a (Gsolv + decomposition)
+decomp_interval = 50          # mode = a : decomposition interval (ps)
+box_size  = 128.0
+grid_size = 128
+
+# ---------------------------------------

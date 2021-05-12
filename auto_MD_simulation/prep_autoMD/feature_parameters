@@ -1,0 +1,14 @@
+# set parameters for featurization
+
+work_dir = '../md_simulation'
+
+m_3Dimage_LJ    = True
+m_total_charge  = True
+m_res_type      = True
+
+m_total_res     = False
+m_res_fraction  = False
+m_terminal      = False
+
+# m_3Dimage_basic = False
+# m_saltbridge  = False
