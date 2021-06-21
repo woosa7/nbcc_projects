@@ -7,6 +7,27 @@
 
 <br>
 
+## auto_MD_simulation
+protein MD (Molecular Dynamics) simulation 자동화 프로그램 개발 (with OpenMM 7.4)
+- protein pre-processing automation
+    * select model & chain
+    * strip water & hydrogen
+    * alternative location for atom
+    * select hetero residue
+    * add missing atoms
+    * mutation of non-standard residues
+    * define disulfide bonds
+    * select solvent ions
+    
+- simulation automation
+    * t-leap
+    * run MD simulation
+    * extract pdb from trajectories
+    * analyze trajectories with cpptraj
+    * calculation solvation free energy and free energy
+    
+<br>
+
 ## analyze_protein_trajectory
 protein simulation trajectory에 대한 다양한 분석 코드
 * HP36 (single chain) & COVID19 (three chains)
