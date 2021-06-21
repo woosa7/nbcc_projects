@@ -1,7 +1,7 @@
 # nbcc_projects
 
 ## NBCC_RGN
-[<End-to-End Differentiable Learning of Protein Structure> (M. AlQuraishi)](https://www.cell.com/cell-systems/fulltext/S2405-4712(19)30076-6) 논문을 다음 환경에서 구현.
+[End-to-End Differentiable Learning of Protein Structure (M. AlQuraishi)](https://www.cell.com/cell-systems/fulltext/S2405-4712(19)30076-6) 논문을 다음 환경에서 구현.
 - python 3.7
 - tensorflow 2.2 
 
