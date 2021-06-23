@@ -146,3 +146,5 @@ dmypy.json
 /DL/logs/
 /.idea/nbcc_projects.iml
 /.idea/workspace.xml
+/Image_Segmentation/data/
+/Image_Segmentation/oxford_pet/
